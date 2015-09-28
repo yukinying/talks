@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"go.corp.yahoo.com/albertyu/html-distance"
+	"github.com/yahoo/gryffin/html-distance"
 	"net/http"
 )
 
