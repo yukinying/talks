@@ -1,0 +1,369 @@
+Building your own large scale web security scanning infrastructure in 40 minutes
+
+Albert Yu
+Bishan Kochar
+@yukinying
+@b1shan
+
+* Don't build, unless you have to !!!
+- It is easy to build one
+- Extremely hard to build a good one
+.image img/steep_curve.jpg 
+.html html/style.html
+
+* Why we built one?
+- Speed
+- Coverage
+- Scale
+- Accuracy
+- Runtime flexibility
+
+* A quick note
+- We will talk Go and Javascript today 
+- Focus on high level implementation
+- Deep dives on core pieces 
+.image img/gophercolor.png _ 640
+
+* Go: 90% Perfect, 100% of the time
+_from_Brad_Fitzpatrick,_GoCon_Tokyo,_2014_
+
+- Go is new but extremely promising
+- Native concurrency
+- Type safety
+- Code quality tools as first class citizens
+- Overall, goodness of Python, Java and C
+
+*Result*: We moved our Python code (v1) to Go (v2 beta) in two months for OSS purpose.
+
+* Common gaps & how we addressed them
+.image img/jumping.jpg _ 1024
+
+* The Neverending Story of Crawling
+
+* Blind crawling
+- <blah>.com/?p=YHOO *vs* <blah>.com/?p=FLICKR
+- <blah>.com/?p=images *vs* <blah>.com/?p=videos
+- <blah>.com/news *vs* <blah>.com/finance
+- <blah>.com/in/cricket *vs* <blah>.com/hk/football
+.image img/blind.jpg _ 640 
+
+* Why is it bad?
+- Never ending crawls!
+- Make it fast, if you wan't a self DoS.
+- Duplicate findings.
+- Continuous Integration?
+
+* How bad that could be 
+.image img/flickr-toomuch.png _ 800
+.caption Time to upgrade your storage plan.
+
+* Crawling with the context
+.image img/flickr1.png 270 800
+.image img/flickr2.png 270 800
+
+* This phenomenon is not exception. 
+.image img/finance1.png _ 1024
+
+* It is the standard behaviour.
+.image img/finance2.png _ 1024
+
+* One single module may serve million pages.
+.code -numbers src/gorilla.go
+
+* Deduplication
+.image img/diff.png _ 1024
+
+* Mask out the data from database
+.image img/diff-colored1.png _ 1024
+
+* Mask out the data from database (2)
+.image img/diff-colored2.png _ 1024
+
+* Same target with deduplication
+.image img/flickr-deduped.png _ 800
+
+* Similarity hash
+
+Adapting [[http://www.cs.princeton.edu/courses/archive/spring04/cos598B/bib/CharikarEstim.pdf][Moses Charikar's Simhash]] for HTML case
+
+- Extract HTML tokens, using golang.org/x/net/html/atom
+- Compute Simhash of the 1st page
+- Compute Simhash of the 2nd page
+- Determine "hamming distance" of the two hashes
+  Similarity = 100% - Distance over Length of Fingerprint
+- Threshold based determination (95% match?)
+
+We call this "HTML Distance"
+
+* Simhash in a nutshell
+.image img/simhash.jpg _ 640
+A demo is worth a thousand pictures...
+
+* HTML Distance, 64 bits
+.play src/html-distance-demo2.go /^func compute/,/^}/
+
+* HTML Distance (Again)
+.play src/html-distance-demo1.go /^func compute/,/^}/
+
+* Fixing locality with n-gram, aka w-shingling
+
+  <h1> <h2> <h3> = countbits( h(A:h1) + h(A:h2) + h(A:h3) )
+  <h3> <h2> <h1> = countbits( h(A:h3) + h(A:h2) + h(A:h1) )
+
+Same result as all tokens sorted before fingerprinting.
+
+N-gram: construct a sequence from 1 tuple to N tuple.
+
+  2-gram(<h1> <h2> <h3>) = { (<h1>,<h2>), (<h2>,<h3>) } => countbits( h(A:h1, A:h2), h(A:h2, A:h3))
+  2-gram(<h3> <h2> <h1>) = { (<h3>,<h2>), (<h2>,<h1>) } => countbits( h(A:h3, A:h2), h(A:h2, A:h1))
+
+* Not always perfect
+- very good on identifying unique pages (similarity > 95%)
+- anything else may have similarity between 80 - 95%.
+- Edge cases, for e.g. unique links within a duplicate
+- Tune similarity threshold and N-gram for better results 
+- Once in a while, scan without it, then timeout
+
+* JavaScript Driven Apps 
+
+* Spot the Differences
+.image img/noscript.png _ 500
+.image img/script.png _ 500
+.caption The profile icon is JS backed.
+
+* Behind the scene. 
+If ⏳ then 😴😴😴 or Ctrl-C?
+- HTML is static, DOM is dynamic. 
+- Conclude crawling DOM when end of HTML is received?
+- What if DOM keeps changing?
+- How much or how long to navigation (click, scroll, etc)?
+
+.image img/xhr.png
+
+* DOM Crawling
+- Uses PhantomJS (headless browser)
+- DOM rendering
+- HTML link extraction
+- Event navigation
+
+
+# may mention why we don't use selenium based solution 
+
+* Render.js
+.play src/exec1.go /cmd/,/equivalent/
+
+* Render.js
+.html src/flickr.out
+
+* Click everything (extractors.js)
+.code src/extractor-sample.js /^function triggerMouseEvent/,/^}/
+.caption MDN API: [[https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/initMouseEvent#JavaScript_Content]] 
+
+* DOM change and link extraction made easy (extractors.js)
+- HTML5 DOM API.
+- Works in PhantomJS 2 only.
+
+.code src/extractor-sample.js /^function observeDOMChanges/,/^}/
+.caption MDN API: [[https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver]]
+
+* <a\s+(?:[^>]*?\s+)?href="([^"]*)"
+
+First of all, the above expression does not work.
+
+With DOM based crawling, link extraction is built within.
+
+.code src/extractor-sample.js /^jsLinks/,/^}/
+
+* Phantomjs interprocess communication: The 3rd way (stdout)
+
+Very few may use that because JSON stream parsing is difficult. Another reason for Go.
+
+.code src/phantomjs.go
+
+* Scalability
+- 500 scans
+- 500 to 1000
+- 1000 to 10,000
+- 10,000 to 100,000
+
+* Scalability is not just that
+- Everything we discussed before, enables it
+- Vertical scalability
+- Horizontal scalability
+- Operational scalability
+- Functional scalability
+- And none of these is autoscaling
+
+* Microservice with NSQ
+.image img/microservice.png _ 600
+
+* From Crawling to Scanning
+.code src/fuzz.go
+
+All NSQ consumers listening to the _fuzz_ queue receive the message.
+
+* Scanning, with Arachni as an example
+.code src/arachni.go /func .*Fuzzer/,/^}/
+
+* Extracting Result
+.code src/arachni.go /func .*extract/,/^}/
+
+* Aggregating Results
+.code src/logger.go
+
+# 
+# * Microservice Based Flow
+# .image img/beehive.png _ 800 
+# 
+# * NSQ and Data structures #1
+# - TODO show code how we do a distributed architecture
+# 
+# * NSQ and Data structures #2
+# - TODO show code how we do a distributed architecture
+# 
+# * NSQ and Data structures #3
+# - TODO show code how we do a distributed architecture
+# 
+# * Runtime scan modules
+# - TODO show example of how to add / remove a scanner
+
+* Everything Together 
+
+.code bin/gryffin.demo /^/,/crawl/
+---
+
+.play src/exec2.go /cmd/,/equivalent/
+
+.caption Code of the vulnerable site available in [[https://github.com/yahoo/webseclab]] by [[https://github.com/dmitris][Dmitry]] 
+
+* Everything Together (con't)
+.code bin/using.arachni
+---
+
+.play src/exec3.go /cmd/,/equivalent/
+.caption [[http://www.arachni-scanner.com/][Arachni]] is an OS web security scanner.
+
+* False Positives
+- It has a cost
+- Is a function of scale
+- Don't feed to engineers
+
+* How can we eliminate XSS false positives?
+
+- WIP 👷 to open source the library used internally.
+
+Related talk, Today 2pm, Room D: 
+*Manage* *Session* *Efficient* *Context-sensitive* *Output* *Escaping* 
+*for* *JavaScript* *Template* *Engines*
+
+*Core* *Idea:*
+
+- Context Parser ([[https://github.com/yahoo/context-parser]]) allows determining exploitability
+# - TODO an example of context parser
+- Gives above 98% accuracy
+
+
+
+* The UI 
+.image img/child.png _ 800
+
+* Unified Reporting: The Dashboard
+.image img/kibana.png _ 1024
+- Elastic search listening to port 5000, 
+- Kibana to show the indexed messages.
+
+* Wait, where is the CI/CD part?
+
+- Seeding data from build is easy. Either via webservice, or directly to NSQ
+- Breaking a build is a controversial subject.
+
+*Points* *for* *Consideration*
+
+1. Time to finish a scan also depends on the fuzzers,
+
+2. Signal to noise ratio is still an issue
+
+3. Automated issue management: easily done by extending the logger   
+
+* Comparisons ...
+
+* ... are potentially partial and one sided.
+- project start time: Oct, 2013
+.image img/apple-orange.jpg _ 1024
+
+* Mozilla Minion
+- open sourced
+- uses Python Celery task queue
+- focus on extensible plugin architecture
+- nmap, skipfish, zap
+
+* Netflix Monterey
+- yet to be open sourced
+- Python based plugin architecture and framework.
+- AWS based
+- nmap, zap, arachni, threadfix
+
+* Current Status of Gryffin 
+
+v1 (Python) 
+- Close sourced. In use at Yahoo.
+
+v2 (Go) - Beta stage 
+- Took around two months to port from Python to Go
+
+* The Stack
+*Major* *Ingredients*
+- Go
+- PhantomJS v2
+- NSQ
+
+*Extra*
+- Sqlmap
+- Arachni
+- Docker
+- Kibana and elastic search 
+
+.image img/cook.jpg _ 480
+
+* What do you get: A concept or a product?
+
+*A*: A minimal viable product that enable CI based scan
+
+*B*: A concept and methodology for building scanning infrastructure
+ 
+And a long TODO list
+- Detection for mobile optimized pages
+- Sharing sessions with Redis
+- Deduplication based on URL pattern from Simhash
+- Collaboration with existing web scanning projects
+- Integration with our homebrew DOMXSS fuzzer and Contextual XSS fuzzer
+
+
+* Because you stayed until now...
+
+* ... let's watch it being open sourced!
+
+[[http://github.com/yahoo/gryffin]]
+
+* Summary
+- Web Page Deduplication
+- Rich Crawler
+- Distributed Architecture
+- Custom and existing scanners
+- Unified reporting
+
+* Acknowledgement
+- Adonis Fung
+- Christopher Harrell
+- Dmitry Savintsev
+- Jacqueline Speiser
+and Yahoo Paranoid Labs team 
+
+* Creative Commons
+- "[[https://www.flickr.com/photos/schoeband/6097858420][Steep Grades / Sharp Curves]]" by [[https://www.flickr.com/photos/schoeband/][Andreina Schoeberlein]] is licensed under CC BY-NC-ND 2.0
+- "[[https://commons.wikimedia.org/wiki/File:Waterfall_located_between_Lower_Navajo_Falls_and_Havasu_Falls.jpg][Waterfall located between Lower Navajo Falls and Havasu Falls]]" by [[https://en.wikipedia.org/wiki/User:Jguff330][Jguff330]] is licensed under CC BY-SA 3.0
+- "[[https://blog.golang.org/gopher][Gopher]]" by [[http://reneefrench.blogspot.com/][Renee French]] is licensed under CC BY 3.0
+- "[[https://commons.wikimedia.org/wiki/File:Blindfold_Marathon.jpg][Blindfold Poetry Marathon]]" by [[https://en.wikipedia.org/wiki/User:Mkacer][Dave Morice]] is licensed under CC BY-SA 3.0 
+- "[[https://commons.wikimedia.org/wiki/File:Child_Art_Aged_4.5_Person_2.png][Child art, aged 4.5]]" by William Robinson is licensed under CC BY-SA 2.5
+- "[[https://www.flickr.com/photos/kokopinto/1745439504][Apple and Orange]]" by [[https://www.flickr.com/photos/kokopinto/][Kathea Pinto]] is licensed under CC BY-SA 2.0
+- "[[https://www.flickr.com/photos/erix/8451143588][Friedhelm's cook]]" by [[https://www.flickr.com/photos/erix/][Erich Ferdinand]] is licensed under CC BY 2.0

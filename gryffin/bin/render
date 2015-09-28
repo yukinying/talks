@@ -1,0 +1,3 @@
+#!/bin/bash
+
+exec $GOPATH/src/github.com/yahoo/gryffin/renderer/resource/render.js $@

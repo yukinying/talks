@@ -1,0 +1,3 @@
+#!/bin/sh
+    exec go run $GOPATH/src/github.com/yahoo/gryffin/cmd/gryffin-distributed/main.go \
+      fuzz-arachni 
