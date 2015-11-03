@@ -9,6 +9,7 @@ Yahoo Paranoid
 
 [[https://yahoo.github.io/secure-handlebars]]
 
+
 * Survey
 
 How many of you are interested in web security? 
@@ -514,6 +515,14 @@ Primary Contributors for JS Templating and Utilities
 "[[https://facebook.github.io/react/docs/jsx-in-depth.html][React JSX in Depth]]" by Facebook Inc is licensed under CC BY 4.0
 "[[https://commons.wikimedia.org/wiki/File:TACT_speeding_violation_(3698915292).jpg][TACT speeding violation]]" by Smallman12q is licensed under CC BY 2.0
 "[[https://commons.wikimedia.org/wiki/File:Longleat_maze.jpg][The maze of Longleat House]]" by Rurik is copyrighted under public domain
+
+* Where are the slides?
+
+.link http://bit.ly/security-viewsource
+
+.link https://github.com/yukinying/talks/tree/master/viewsource2015 
+
+- presented via go present tools
 
 # References 
 # https://css.csail.mit.edu/6.858/2011/slides/LEC6.pdf 
