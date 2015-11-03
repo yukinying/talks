@@ -1,0 +1,157 @@
+<html>
+<link rel="stylesheet" href="./demo_files/pure-min.css">
+<style>
+
+    .pure-g {
+        font-family: Consolas, Courier, monospace
+    }
+
+    code, table, span, textarea {
+        font-family: Consolas, Courier, monospace
+    }
+
+    #output {
+        /*overflow-y: scroll ;*/
+        height: 70%;
+    }
+
+    .pure-g > div {
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+    }
+
+    .l-box {
+        padding: 1em;
+    }
+
+    .color0  { color : #E91E63 }  
+    .color1  { color : #000000 }
+    .color2  { color : #00BCD4 }
+    .color3  { color : #03A9F4 }
+    .color4  { color : #3F51B5 }
+    .color5  { color : #004D40 }
+    .color6  { color : #4CAF50 }
+    .color7  { color : #8BC34A }
+    .color8  { color : #795548 }
+    .color9  { color : #3E2723 }
+    .color10 { color : #FF5722 }
+    .color11 { color : #757575 }
+    .color12 { color : #212121 }
+    .color13 { color : #424242 }
+    .color14 { color : #1A237E }
+
+
+</style>
+<script src=./demo_files/bundle.js></script>
+<body>
+<div class="pure-g">
+
+    <div class="pure-u-1-3 l-box">
+        <textarea id="data" onkeyup="parse()" rows=20 cols=35>
+<a<b<c>
+<!-- comment !--> <? comment >
+</d id=e/>
+<f g = h >, <f g=<h>, or <f g=h> ?
+<script> what 
+  <!-- this
+  <script> actually
+  </script> means 
+     --> ?
+     </script>
+
+<div> where am I? </div>
+
+        </textarea>
+        <br/>
+        <button class="pure-button" onclick="parse()">Parse Again</button>
+    </div>
+    <div class="pure-u-3-5 l-box">
+
+        <code class="pure-u-1 l-box">
+            <div>
+                <span id="element"> ? </span>
+                <span > = </span>
+                <span id="context"> ? </span>
+            </div>
+            <div>
+                <span id="state0"> ? </span>
+                <span >&#10137;</span>
+                <span id="state1"> ? </span>
+            </div>
+        </code>
+        <code class="pure-u-1 l-box scroll" id="output"></code> 
+
+    </div>
+
+</div>
+<script>
+
+var initialized = false;
+var stateRealNames = {};
+var contextRealNames = {};
+
+var parse = function() {
+
+    try {
+
+        var data = document.getElementById("data").value;
+        var len = data.length;
+        var parsed = Window.parse(data);
+        var output = '';
+
+        if( !initialized  ) {
+            for ( var state in parsed.stateNames ) {
+                stateRealNames[parsed.stateNames[state]] = state;
+            }
+            for ( var context in parsed.contextNames ) {
+                contextRealNames[parsed.contextNames[context]] = context;
+            }
+            initialized = true;
+        }
+
+
+        for(var i=0; i<len; ++i) {
+            var ch = data[i];
+            // var stateclass = 'color' + parsed.states[i];
+            var contextClass = 'color' + parsed.contexts[i+1];
+            if (ch == '<') { ch = '&#60;'; }
+            if (ch == '\n') { ch = '<br/>'; }
+            output += '<span onmouseover="show(this)"' + 
+                ' data-context=' + parsed.contexts[i+1] + 
+                ' data-state0=' + parsed.states[i] + 
+                ' data-state1=' + parsed.states[i+1] + 
+                ' class=' + contextClass + '>' + ch + '</span>';
+        }
+
+        document.getElementById("output").innerHTML = output;
+    } catch (e) {
+        document.getElementById("output").innerText = "Parse error. See console log for details."
+        console.warn(e);
+    }
+}
+
+var show = function(ele) {
+    try {
+        context = ele.getAttribute('data-context');
+        state0 = ele.getAttribute('data-state0');
+        state1 = ele.getAttribute('data-state1');
+            console.log("showing " + context + " " + state0 + " " + state1);
+
+        document.getElementById("context").innerHTML = contextRealNames[context];
+        document.getElementById("state0").innerHTML = stateRealNames[state0];
+        document.getElementById("state1").innerHTML = stateRealNames[state1];
+        document.getElementById("element").innerHTML = ele.innerHTML;
+
+    } catch (e) {
+        console.warn(e)
+
+    }
+
+
+}
+
+parse();
+</script>
+</body>
+</html>

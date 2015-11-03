@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<!-- saved from url=(0068)https://yahoo.github.io/secure-handlebars/demosSecureHandlebars.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <title>Secure Handlebars Demo</title>
+    <link rel="stylesheet" type="text/css" href="./demo_files/cssbase-min.css">
+    <link rel="stylesheet" type="text/css" href="./demo_files/cssreset-min.css">
+    <link rel="stylesheet" href="./demo_files/security.css" type="text/css">
+
+    <!-- Bootstrap -->
+    <link href="./demo_files/bootstrap.min.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+
+    <link href="./demo_files/blog.css" rel="stylesheet">
+    <link href="./demo_files/carousel.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9] >
+      <script src="javascripts/html5shiv.min.js"></script>
+      <script src="javascripts/respond.min.js"></script>
+    <![endif]-->
+  <style>
+    .templateBox {
+        resize: none;
+    }
+    </style><style id="holderjs-style" type="text/css"></style></head>
+    
+
+    <body>
+    <a href="https://github.com/yahoo/secure-handlebars"><img style="position: absolute; top: 0; right: 0; border: 0;" src="./demo_files/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"></a>
+    <div class="header">
+      <h1 class="header-logo">
+      </h1>
+    </div>
+        <div class="blog-masthead">
+          <div class="container">
+            <nav class="blog-nav">
+              <a class="blog-nav-item " href="https://yahoo.github.io/secure-handlebars/">Home</a>
+              <a class="blog-nav-item " href="https://yahoo.github.io/secure-handlebars/safejstemplating.html">Safe JS Templating</a>
+              <a class="blog-nav-item " href="https://yahoo.github.io/secure-handlebars/gettingstart.html">Getting Started</a>
+              <a class="blog-nav-item active" href="./demo_files/demo.html">Demos</a>
+              <a class="blog-nav-item " href="https://yahoo.github.io/secure-handlebars/bugBounty.html">Bug Bounty</a>
+              <a class="blog-nav-item navbar-right" href="https://yahoo.github.io/secure-handlebars/demosXssFilters.html">XSS Filters Demo</a>
+              <a class="blog-nav-item navbar-right" href="https://github.com/yahoo/secure-handlebars/blob/master/README.md">Documentation</a>
+            </nav>
+          </div>
+        </div>
+
+    <div class="container">
+      <!-- grid system: http://getbootstrap.com/css/#grid -->
+      <div class="row">
+        <div class="col-md-12 blog-main">
+          <h2 class="header-badge">Secure Handlebars Demo</h2>
+        </div>
+
+        <div class="col-md-12 blog-post">
+          <p>Here's a demo for client-side usage. Feel free to supply a Handlebars template and some data to see the effect. Check out the <a href="https://github.com/yahoo/secure-handlebars/#supported-contexts">supported contexts</a>.</p>
+        </div>
+
+        <div class="col-md-6 blog-post">
+          <h3>Original Handlebars Template</h3>
+          <textarea id="templateInput" class="templateBox form-control" rows="10"></textarea>
+        </div>
+        <div class="col-md-6 blog-post">
+          <h3>Preprocessed Handlebars Template</h3>
+          <textarea id="templateOutput" class="templateBox form-control" aria-describedby="basic-addon1" rows="10" readonly=""></textarea>
+        </div>
+        <div class="col-md-6 blog-post">
+          <h3>Data input in JSON format</h3>
+          <textarea id="jsonInput" class="templateBox form-control" aria-describedby="basic-addon1" rows="10"></textarea>
+        </div>
+        <div class="col-md-6 blog-post">
+          <h3>Resulted HTML</h3>
+          <textarea id="output" class="templateBox form-control" aria-describedby="basic-addon1" rows="10" readonly=""></textarea>
+        </div><!-- blog-post -->
+        <div class="col-md-12 blog-post">
+          <p><input type="checkbox" id="strictMode" aria-label="Strict Mode"> Enable strict mode (the pre-processor will throw exception if context is not supported by our Context Parser, otherwise, the original auto escaping filter is applied!</p>
+        </div>
+
+        <script src="./demo_files/secure-handlebars.min.js"></script>
+        <script src="./demo_files/demos_context_parser_handlebars.js"></script>
+
+        <div class="col-md-12 blog-post">
+          <ol class="list-unstyled">
+           <li><img src="./demo_files/secure-handlebars.svg"> <a href="https://www.npmjs.com/package/secure-handlebars">Secure Handlebars</a></li>
+           <!--li><img src="https://img.shields.io/npm/v/secure-handlebars-helpers.svg?style=flat-square"/> <a href="https://www.npmjs.com/package/secure-handlebars-helpers">Secure Handlebars Helpers</a></li-->
+           <li><img src="./demo_files/express-secure-handlebars.svg"> <a href="https://www.npmjs.com/package/express-secure-handlebars">Express Secure Handlebars</a></li>
+          </ol>
+        </div><!-- blog-post -->
+
+        <div class="security-cta col-md-12 blog-post">
+          <form action="https://yahoo.github.io/secure-handlebars/demosXssFilters.html" method="get">
+            <button type="submit">Demo of XSS Filters</button>
+          </form>
+        </div>
+
+      </div><!-- row -->
+    </div><!-- container -->
+
+    <div class="footer">
+    <a href="https://policies.yahoo.com/us/en/yahoo/privacy/index.htm" target="_blank">Privacy</a> |
+    <a href="https://policies.yahoo.com/us/en/yahoo/terms/utos/index.htm" target="_blank">Legal</a>
+    </div>
+        <!-- Bootstrap core JavaScript
+        ================================================== -->
+        <!-- Placed at the end of the document so the pages load faster -->
+        <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+        <script src="./demo_files/jquery.min.js"></script>
+        <!-- Include all compiled plugins (below), or include individual files as needed -->
+        <script src="./demo_files/bootstrap.min.js"></script>
+    
+        <script src="./demo_files/docs.min.js"></script>
+        <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+        <script src="./demo_files/ie10-viewport-bug-workaround.js"></script>
+    
+      
+    
+</body></html>

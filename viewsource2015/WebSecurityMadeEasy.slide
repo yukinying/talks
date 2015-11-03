@@ -1,0 +1,521 @@
+Web Secuity Made Easy
+3 Nov 2015
+
+Albert Yu
+Yahoo Paranoid 
+@yukinying 
+
+[[https://github.com/yahoo/secure-handlebars]]
+
+[[https://yahoo.github.io/secure-handlebars]]
+
+* Survey
+
+How many of you are interested in web security? 
+
+* Survey
+
+How many of you are interested in web security? 
+
+How many of you has resolve a security issue recently?
+
+* Survey
+
+How many of you are interested in web security? 
+
+How many of you has resolve a security issue recently?
+
+How many of you like working with the security team?
+
+
+# * Security people counts CVEs
+# 
+# XSS  
+# - 222 (3 mo.); 2742 (3 yr.)
+# 
+# SQLi
+# - 52 (3 mo.); 821 (3 yr.)
+# 
+# RCE
+# - 5 (3 mo.); 31 (3 yr.)
+# 
+# 
+
+* What other people think I do
+
+.image img/guard.png 500 _
+
+* What some developers think I do
+
+.image img/speeding.jpg 500 _
+
+* What I actually do
+
+.image img/pull-hair.jpg 500 _
+
+
+
+* How security team mitigate bugs
+
+- use proper tools
+- use proper techniques to prevent or detect compromises
+- and then put this up:
+
+.image img/cliff.jpg _ 800
+
+* call me: blackbox, silo, ... 
+
+.image img/confused.png
+
+What development team sees:
+
+- Tell us where the bug is and we fix it quickly
+- Not how to exploit it.
+- Not how to block a launch.
+
+* Security team vs development team
+
+- Finger pointing
+- Human error
+- Reactive
+- Process?
+
+A single bug would compromise security of the whole system.
+
+It's a no-win situation.
+
+And attackers always win. 
+
+* Let's build a secure product together
+
+* Part 1: Web Security
+
+* Rationale
+
+- understand the cause of issue
+- building security control by design 
+- avoid misuse 
+
+* What security team see:
+
+Web security is hard.
+
+- First cross site scripting (XSS) discovered in 2005
+- SQL injections causing huge data leaks
+- Remote code execution among highest class in bug bounty
+
+All of them are still prevailing problems in 2015.
+
+* OWASP Top 10
+
+View from security team:
+
+- Injection
+- Auth and Session Mgt
+- Cross site scripting
+- Object References
+- Misconfiguration
+- Data Exposure
+- Func Level Access Control
+- Request Forgery (Confused Deputy)
+- Known Vulnerabilities
+- Redirects
+
+* 3 major areas that lead to web security issues
+
+View from development team:
+
+*Mixing* *code* *and* *data* *segment*
+
+- with a solution that we will cover today.
+
+*AuthN/AuthZ* *flawed* *implementation*
+
+- use crypto properly and carefully; this would be another talk.
+
+*Misconfiguration*
+
+- call it the devops issue.
+
+* Exercise #1: Mixing code and data segment
+
+.code code/bufferoverflow.c
+
+
+* Segmentation fault is the first line of defense
+
+.code code/bufferoverflow.c
+
+According to Wikipedia: 
+
+    A segmentation fault (often shortened to segfault) or access violation
+    is a fault raised by hardware with memory protection, notifying an
+    operating system (OS) about a memory access violation;
+
+OS, by design, tries to prevent mistakes that write *data* to *code* block.
+
+* XKCD: Exploits of a Mom
+
+.image img/exploits_of_a_mom.png _ 1000
+
+.code code/sqli.js 
+
+.code code/sqlbind.js
+
+* An important concept there
+
+.code code/sqlbind.js
+
+How this work?
+
+- SQL engine parses the query,
+- identify data and code segments,
+- and then make sure data segment never overwrites the boundary.
+
+* "but most of all, samy is my hero" (2005)
+
+Probably casued by:
+
+.code code/xss1.js
+
+But not: 
+
+.code code/xssbind.js
+
+Good enough?
+
+* XSS in action: Component JS
+
+# TODO: show the html template
+# 
+.html html/1.html
+
+* XSS Explained: JQuery Markup?
+
+.html html/2.html
+
+* XSS Explained: Nunjuck?
+
+# .image img/todomvc-xss-static.png
+# .image img/nunjuck.png
+# .image img/vm.png
+
+.image img/taintedflow.png 600 _ 
+
+* Nunjuck Documentation
+
+.image img/nunjuck.doc.png 
+
+* Shouldn't we...
+
+- Should nunjuck have autoescape turned on by default?
+- Should JQuery Markup turn on nunjuck autoescape by default?
+- Should Template author sanitize the data before putting it to template engine?
+
+
+* A hard escape game
+
+.image img/context.png
+.caption List of contexts from https://www.npmjs.com/package/secure-handlebars
+
+What made this harder: 
+
+- Javascript does not provide HTML entity escape function 
+- Using HTML entity escape does not solve issues in some of the context
+
+
+* Play the escape game well
+
+.image img/maze.jpg _ 800
+
+Those escape properly
+
+- Yahoo Safe Javascript Templating
+- Google Closure Template
+- Facebook's React JSX  (_note:_ _it's_ _JSX,_ _not_ _JS_)
+- HTMLBars
+
+# Let's go through how we can do it properly.
+
+* Safe Javascript Templating 
+
+* 1st Approach: riding on JS templating 
+
+* 1st Approach: riding on existing JS templating libraries
+
+[[https://yahoo.github.io/secure-handlebars/]]
+
+What it does:
+
+- parse the template and find out the context
+- apply contextual escaping on the data
+
+* Seeing it in action
+
+.iframe html/demo1.html 1280 1024
+
+* Using safe JS templating in 1 line
+
+.image img/enable-express.png 400 _
+
+* Safe JS templating explained in 4 steps
+
+Step 1: Parse HTML5 
+
+.link https://github.com/yahoo/context-parser
+
+Step 2: Fix browser quirks
+
+Step 3: Walk the template abstract syntax tree (AST) 
+
+.link https://github.com/yahoo/express-secure-handlebars
+
+Step 4: Apply xss filter per context of the placeholder
+
+.link https://github.com/yahoo/xss-filters
+
+* Exercise 2: We think we know HTML well...
+
+.code html/sample1.html
+
+It renders as:
+
+.html html/sample1.html
+
+* ⌘U ViewSource
+.image img/viewsource.png _ 800 
+
+* Read the Manual
+
+.link http://www.w3.org/TR/html5/syntax.html
+
+Section 8, Tokenization: 
+
+- 149 pages (using print preview)
+
+There is an easier way to read it or build it...
+
+* HTML tokenization flow diagram
+.image img/everything.png _ 1000
+
+* HTML5 state transition, simplified
+
+# .iframe html/visual.html 1280 1024
+.html html/visual.html 
+
+# .image img/states.png _ 800
+
+* Source Code
+.image img/state-tables.png 300 _
+
+.image img/fast-parser.png 200 _ 
+
+* Result
+
+.iframe html/demo3.html 1280 1024
+
+* Recap: How to build JS templating properly
+
+Step 1: Parse HTML5 
+
+Step 2: Fix browser quirks
+
+Step 3: Walk the template abstract syntax tree (AST) 
+
+Step 4: Apply xss filter per context of the placeholder
+
+
+* 2nd Approach: Template ⇨ Object ⇨ HTML
+
+* 2nd Approach: Structual Template ⇨ Object ⇨ HTML
+
+Facebook's React JSX 
+
+.code code/react1.js
+
+- Data are represented as XML object 
+- Rendering take XML value and convert to safe HTML value 
+- Remove all fields that are not known during rendering
+
+- Need to rewrite HTML into compliant XML. ☹ 
+
+[[https://facebook.github.io/react/docs/jsx-gotchas.html][Gotcha]]: [[https://facebook.github.io/react/tips/dangerously-set-inner-html.html][Dangerous API]]
+
+.code code/react-dangerous1.js
+
+* Special notes on dangerous APIs ...
+
+.image img/dangeroushtml.png _ 800 
+
+
+* Part 2: Browser Security
+
+* If you are still awake
+
+Sorry! 
+
+There are probably many better browser people here.
+
+That would take another hour.
+
+Let's do that next time!
+
+* Takeaways
+
+* Developer: please use the right library in the right way
+
+Legitimate templating: put *escaped* data in HTML data blocks only 
+
+    <div>{{inHTMLData data}}</div>
+
+Auto-escaped templating: put data in *HTML* *data* blocks only
+
+    <div>{{data}}</div>
+    <!-- but not <div id={{id}}> -->
+
+Contextual auto-escaped templating    
+
+    <div id={{id}} onClick={{disallow}} >{{data}}</div>
+
+Structual templating, rejecting all non-compliant syntax 
+
+    render: function() {
+        return (
+            <div id={this.id} onClick={this.handleClick}> {{this.data}} </div>
+        );
+    }
+
+
+
+* Builders: let's build a safer web, one step at a time
+
+- Do you own any templating engine? 
+- Would you take an extra step to build a safer library?
+
+.image img/one-at-a-time.png
+
+
+
+
+## * ViewSource!
+## 
+## // Firefox, Sarafi. DOM, Syntax 
+
+## * How Developers see:
+## 
+## HTML Markup from web designers
+## 
+## - Can't rewrite to JSX quickly 
+## 
+## Simple and ready to use. Independent of tech stack
+## 
+## - Can't use Closure Template (Java + Google JS Lib)
+## 
+## 
+## 
+## 
+## # Notes:
+## # how to install
+## # use google template payload
+## # 
+## # explain the 4 steps to build this.
+## # 
+## 
+## * Part 2: Browser Security 
+## 
+## * HTTP-only
+## 
+## Defender: Protect your cookie from untrusted Javascript. 
+## 
+## Attacker: 
+## 
+## - I can break your UI and steal your HTML text.
+## - I can sniff your traffic via other means.
+## 
+## * TLS
+## 
+## Defender: Let's encrypt the traffic
+## 
+## Attacker: 
+## 
+## Protecting TLS: Strict transport security, public key pinning.
+## 
+## * Content Security Policy
+## 
+## Defender: Disallow anything I don't know
+## 
+## Attacker: Usability issue kills it. You still have `script-src` `'self'`
+## 
+## * Encode everything
+## 
+## Defender: I will encode everything that cause XSS
+## 
+## Attacker: as long as you put untrusted data in non-HTML text context, I can still exploit it.
+## 
+## * HTML Contexts
+## 
+## // TODO - all the HTML contexts.
+## 
+## * Parsing HTML
+## 
+## // TODO - std library? 
+## 
+## * ViewSource!
+## 
+## // Firefox, Sarafi. DOM, Syntax 
+## 
+## * Our Solution
+## 
+## * Step 1: Build our own html parser
+## 
+## * Step 2: Dealing with browser quirks
+## 
+## * Step 3: Walking the template ast (abstract syntax tree)
+## 
+## * Step 4: Apply the filter functions
+## 
+## * Demo 
+
+* Acknowledgement
+
+Primary Contributors for JS Templating and Utilities
+
+- Nera Liu
+- Adonis Fung
+
+[[http://twitter.com/YahooSecurity][@YahooSecurity]] and Yahoo Engineers
+
+- Aditya Mahendrakar
+- Alaa Mubaied
+- Christopher Harrell
+- Christopher Rohlf
+- Eric Ferraiuolo
+- Jeremy Ruppel
+- Stuart Larsen
+
+
+* Upcoming Projects from Yahoo Security
+
+.link https://github.com/yahoo/html-purify
+
+- using html parser
+- generate safe set of HTML
+- aiming to replace "DangerousSetInnerHTML"
+
+* Creative Commons
+
+"[[https://www.flickr.com/photos/evilerin/3078856253][AAAARRRGGGHHH]]" by [[https://www.flickr.com/photos/evilerin/][Emergency Brake]] is licensed under CC BY 2.0
+"[[https://www.owasp.org/index.php/Buffer_overflow_attack][Buffer Overflow Attack]]" by KirstenS is licensed under CC BY-SA 3.0
+"[[https://www.flickr.com/photos/snowmentality/4694187463][Cliff warning sign]]" by snowmentality is licensed under CC BY 2.0
+"[[https://developers.google.com/closure/templates/docs/security?hl=en][Closure Templates Security]]" by Google is licensed under CC BY 3.0
+"[[http://mike44nh.deviantart.com/art/Concert-Security-Guard-293609954][Concert Security Guard]]" by [[http://mike44nh.deviantart.com/][Michael Philbrook]] is licensed under BY-NC-SA 3.0
+"[[https://github.com/break24/PhantomOpenEmoji][Confused Emoji]]" by break24 is licensed under CC BY 3.0
+"[[http://xkcd.com/327/][Exploits of a Mom]]" by [[https://xkcd.com/][XKCD]] is licensed under CC BY-NC 2.5
+"[[https://facebook.github.io/react/docs/jsx-in-depth.html][React JSX in Depth]]" by Facebook Inc is licensed under CC BY 4.0
+"[[https://commons.wikimedia.org/wiki/File:TACT_speeding_violation_(3698915292).jpg][TACT speeding violation]]" by Smallman12q is licensed under CC BY 2.0
+"[[https://commons.wikimedia.org/wiki/File:Longleat_maze.jpg][The maze of Longleat House]]" by Rurik is copyrighted under public domain
+
+# References 
+# https://css.csail.mit.edu/6.858/2011/slides/LEC6.pdf 
+# https://github.com/felixge/node-mysql#escaping-query-values 
+# https://gist.github.com/dergachev/4627207 (screencast to gif)

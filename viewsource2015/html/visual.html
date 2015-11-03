@@ -1,0 +1,1861 @@
+<script src="./html/visual_files/d3.v3.min.js"></script>
+<script>
+
+/* color palette from http://zend.lojcomm.com.br/standards/windows-theme-color-palette/ */
+var 
+  col_number=53,
+  row_number=20,
+  colorBuckets = 70;
+
+var   
+  hcrow = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,16,17,18,19,20];
+  hccol = [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,16,17,18,19,20,
+    21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,
+    41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,
+    61,62,63,64,65,66,67,68,69,70,71];
+
+
+var colors = ['#EAEAEA',
+   '#8AE234','#73D216', /* data */
+   '#0000FF','#1111FF','#2222FF', /* rcdata, rawdata */
+   '#EF2929', /* script data */
+   '#3333FF', /* plaintext*/
+   '#AD7FA8','#A571A1','#9D6399', /* tags */
+   '#F4E0EC','#F6DDEF','#F7DBF1','#F9D8F4','#FAD5F7','#FCD2FA', /* rcdata, rawdata - less than */
+   '#FFE35D','#FFDF4A','#FFDA38',
+   '#FFD525','#FFD113','#FFCC00','#FFC700','#FFC300','#FFBE00','#FFB900','#FFB500',
+   '#FFB000','#FFAC00','#FFA700','#FFA200','#FF9E00','#FF9900',
+   '#955592','#8D478B','#863883','#7E2A7C','#C6D9F0','#C6D9F0','#C6D9F0','#C6D9F0','#761C75',
+   '#6E0E6D', /* self closing tag */
+   '#555753','#4C4D4F','#42444C','#393A48','#2F3045','#262741','#1C1D3E','#13133A' /* bogus comment */
+   ];
+
+
+
+
+
+var char_labels = [     
+     'U+0000 NULL     ',
+     'U+0009 TAB      ',
+     'U+000A LINE FEED',
+     'U+000C FORM FEED',
+     'U+0020 SPACE    ',
+     'U+0021 (!)      ',
+     'U+0022 (")      ',
+     'U+0023 (#)      ',
+     'U+0026 (&)      ',
+     'U+0027 (\')      ',
+     'U+002D (-)      ',
+     'U+002F (/)      ',
+     'U+003C (<)      ',
+     'U+003D (=)      ',
+     'U+003E (>)      ',
+     'U+003F (?)      ',
+     'U+0060 (`)      ',
+     'Letter [A-z]    ',
+     'Anything else   ',
+];
+
+var state_labels = [
+'UNKNOWN',
+'DATA',
+'CHARACTER_REFERENCE_IN_DATA',
+'RCDATA',
+'CHARACTER_REFERENCE_IN_RCDATA',
+'RAWTEXT',
+'SCRIPT_DATA',
+'PLAINTEXT',
+'TAG_OPEN',
+'END_TAG_OPEN',
+'TAG_NAME',
+'RCDATA_LESS_THAN_SIGN',
+'RCDATA_END_TAG_OPEN',
+'RCDATA_END_TAG_NAME',
+'RAWTEXT_LESS_THAN_SIGN',
+'RAWTEXT_END_TAG_OPEN',
+'RAWTEXT_END_TAG_NAME',
+'SCRIPT_DATA_LESS_THAN_SIGN',
+'SCRIPT_DATA_END_TAG_OPEN',
+'SCRIPT_DATA_END_TAG_NAME',
+'SCRIPT_DATA_ESCAPE_START',
+'SCRIPT_DATA_ESCAPE_START_DASH',
+'SCRIPT_DATA_ESCAPED',
+'SCRIPT_DATA_ESCAPED_DASH',
+'SCRIPT_DATA_ESCAPED_DASH_DASH',
+'SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN',
+'SCRIPT_DATA_ESCAPED_END_TAG_OPEN',
+'SCRIPT_DATA_ESCAPED_END_TAG_NAME',
+'SCRIPT_DATA_DOUBLE_ESCAPE_START',
+'SCRIPT_DATA_DOUBLE_ESCAPED',
+'SCRIPT_DATA_DOUBLE_ESCAPED_DASH',
+'SCRIPT_DATA_DOUBLE_ESCAPED_DASH_DASH',
+'SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN',
+'SCRIPT_DATA_DOUBLE_ESCAPE_END',
+'BEFORE_ATTRIBUTE_NAME',
+'ATTRIBUTE_NAME',
+'AFTER_ATTRIBUTE_NAME',
+'BEFORE_ATTRIBUTE_VALUE',
+'ATTRIBUTE_VALUE_DOUBLE_QUOTED',
+'ATTRIBUTE_VALUE_SINGLE_QUOTED',
+'ATTRIBUTE_VALUE_UNQUOTED',
+'CHARACTER_REFERENCE_IN_ATTRIBUTE_VALUE',
+'AFTER_ATTRIBUTE_VALUE_QUOTED',
+'SELF_CLOSING_START_TAG',
+'BOGUS_COMMENT',
+'MARKUP_DECLARATION_OPEN',
+'COMMENT_START',
+'COMMENT_START_DASH',
+'COMMENT',
+'COMMENT_END_DASH',
+'COMMENT_END',
+'COMMENT_END_BANG',
+'DOCTYPE',
+'BEFORE_DOCTYPE_NAME',
+'DOCTYPE_NAME',
+'AFTER_DOCTYPE_NAME',
+'AFTER_DOCTYPE_PUBLIC_KEYWORD',
+'BEFORE_DOCTYPE_PUBLIC_IDENTIFIER',
+'DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED',
+'DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED',
+'AFTER_DOCTYPE_PUBLIC_IDENTIFIER',
+'BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDENTIFIERS',
+'AFTER_DOCTYPE_SYSTEM_KEYWORD',
+'BEFORE_DOCTYPE_SYSTEM_IDENTIFIER',
+'DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED',
+'DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED',
+'AFTER_DOCTYPE_SYSTEM_IDENTIFIER',
+'BOGUS_DOCTYPE',
+'CDATA_SECTION'
+];
+
+var state_transitions = [
+{row:0,col:0,value:0},
+{row:0,col:1,value:1},
+{row:0,col:2,value:1},
+{row:0,col:3,value:3},
+{row:0,col:4,value:3},
+{row:0,col:5,value:5},
+{row:0,col:6,value:6},
+{row:0,col:7,value:7},
+{row:0,col:8,value:1},
+{row:0,col:9,value:44},
+{row:0,col:10,value:10},
+{row:0,col:11,value:3},
+{row:0,col:12,value:3},
+{row:0,col:13,value:3},
+{row:0,col:14,value:5},
+{row:0,col:15,value:5},
+{row:0,col:16,value:5},
+{row:0,col:17,value:6},
+{row:0,col:18,value:6},
+{row:0,col:19,value:6},
+{row:0,col:20,value:6},
+{row:0,col:21,value:6},
+{row:0,col:22,value:22},
+{row:0,col:23,value:22},
+{row:0,col:24,value:22},
+{row:0,col:25,value:22},
+{row:0,col:26,value:22},
+{row:0,col:27,value:22},
+{row:0,col:28,value:22},
+{row:0,col:29,value:29},
+{row:0,col:30,value:29},
+{row:0,col:31,value:29},
+{row:0,col:32,value:29},
+{row:0,col:33,value:29},
+{row:0,col:34,value:35},
+{row:0,col:35,value:35},
+{row:0,col:36,value:35},
+{row:0,col:37,value:40},
+{row:0,col:38,value:38},
+{row:0,col:39,value:39},
+{row:0,col:40,value:40},
+{row:0,col:41,value:0},
+{row:0,col:42,value:34},
+{row:0,col:43,value:34},
+{row:0,col:44,value:44},
+{row:0,col:45,value:44},
+{row:0,col:46,value:48},
+{row:0,col:47,value:48},
+{row:0,col:48,value:48},
+{row:0,col:49,value:48},
+{row:0,col:50,value:48},
+{row:0,col:51,value:48},
+{row:0,col:52,value:0},
+{row:0,col:53,value:0},
+{row:0,col:54,value:0},
+{row:0,col:55,value:0},
+{row:0,col:56,value:0},
+{row:0,col:57,value:0},
+{row:0,col:58,value:0},
+{row:0,col:59,value:0},
+{row:0,col:60,value:0},
+{row:0,col:61,value:0},
+{row:0,col:62,value:0},
+{row:0,col:63,value:0},
+{row:0,col:64,value:0},
+{row:0,col:65,value:0},
+{row:0,col:66,value:0},
+{row:0,col:67,value:0},
+{row:0,col:68,value:0},
+{row:1,col:0,value:0},
+{row:1,col:1,value:1},
+{row:1,col:2,value:1},
+{row:1,col:3,value:3},
+{row:1,col:4,value:3},
+{row:1,col:5,value:5},
+{row:1,col:6,value:6},
+{row:1,col:7,value:7},
+{row:1,col:8,value:1},
+{row:1,col:9,value:44},
+{row:1,col:10,value:34},
+{row:1,col:11,value:3},
+{row:1,col:12,value:3},
+{row:1,col:13,value:3},
+{row:1,col:14,value:5},
+{row:1,col:15,value:5},
+{row:1,col:16,value:5},
+{row:1,col:17,value:6},
+{row:1,col:18,value:6},
+{row:1,col:19,value:6},
+{row:1,col:20,value:6},
+{row:1,col:21,value:6},
+{row:1,col:22,value:22},
+{row:1,col:23,value:22},
+{row:1,col:24,value:22},
+{row:1,col:25,value:22},
+{row:1,col:26,value:22},
+{row:1,col:27,value:22},
+{row:1,col:28,value:22},
+{row:1,col:29,value:29},
+{row:1,col:30,value:29},
+{row:1,col:31,value:29},
+{row:1,col:32,value:29},
+{row:1,col:33,value:29},
+{row:1,col:34,value:34},
+{row:1,col:35,value:36},
+{row:1,col:36,value:35},
+{row:1,col:37,value:37},
+{row:1,col:38,value:38},
+{row:1,col:39,value:39},
+{row:1,col:40,value:34},
+{row:1,col:41,value:0},
+{row:1,col:42,value:34},
+{row:1,col:43,value:34},
+{row:1,col:44,value:44},
+{row:1,col:45,value:44},
+{row:1,col:46,value:48},
+{row:1,col:47,value:48},
+{row:1,col:48,value:48},
+{row:1,col:49,value:48},
+{row:1,col:50,value:48},
+{row:1,col:51,value:48},
+{row:1,col:52,value:0},
+{row:1,col:53,value:0},
+{row:1,col:54,value:0},
+{row:1,col:55,value:0},
+{row:1,col:56,value:0},
+{row:1,col:57,value:0},
+{row:1,col:58,value:0},
+{row:1,col:59,value:0},
+{row:1,col:60,value:0},
+{row:1,col:61,value:0},
+{row:1,col:62,value:0},
+{row:1,col:63,value:0},
+{row:1,col:64,value:0},
+{row:1,col:65,value:0},
+{row:1,col:66,value:0},
+{row:1,col:67,value:0},
+{row:1,col:68,value:0},
+{row:2,col:0,value:0},
+{row:2,col:1,value:1},
+{row:2,col:2,value:1},
+{row:2,col:3,value:3},
+{row:2,col:4,value:3},
+{row:2,col:5,value:5},
+{row:2,col:6,value:6},
+{row:2,col:7,value:7},
+{row:2,col:8,value:1},
+{row:2,col:9,value:44},
+{row:2,col:10,value:34},
+{row:2,col:11,value:3},
+{row:2,col:12,value:3},
+{row:2,col:13,value:3},
+{row:2,col:14,value:5},
+{row:2,col:15,value:5},
+{row:2,col:16,value:5},
+{row:2,col:17,value:6},
+{row:2,col:18,value:6},
+{row:2,col:19,value:6},
+{row:2,col:20,value:6},
+{row:2,col:21,value:6},
+{row:2,col:22,value:22},
+{row:2,col:23,value:22},
+{row:2,col:24,value:22},
+{row:2,col:25,value:22},
+{row:2,col:26,value:22},
+{row:2,col:27,value:22},
+{row:2,col:28,value:22},
+{row:2,col:29,value:29},
+{row:2,col:30,value:29},
+{row:2,col:31,value:29},
+{row:2,col:32,value:29},
+{row:2,col:33,value:29},
+{row:2,col:34,value:34},
+{row:2,col:35,value:36},
+{row:2,col:36,value:35},
+{row:2,col:37,value:37},
+{row:2,col:38,value:38},
+{row:2,col:39,value:39},
+{row:2,col:40,value:34},
+{row:2,col:41,value:0},
+{row:2,col:42,value:34},
+{row:2,col:43,value:34},
+{row:2,col:44,value:44},
+{row:2,col:45,value:44},
+{row:2,col:46,value:48},
+{row:2,col:47,value:48},
+{row:2,col:48,value:48},
+{row:2,col:49,value:48},
+{row:2,col:50,value:48},
+{row:2,col:51,value:48},
+{row:2,col:52,value:0},
+{row:2,col:53,value:0},
+{row:2,col:54,value:0},
+{row:2,col:55,value:0},
+{row:2,col:56,value:0},
+{row:2,col:57,value:0},
+{row:2,col:58,value:0},
+{row:2,col:59,value:0},
+{row:2,col:60,value:0},
+{row:2,col:61,value:0},
+{row:2,col:62,value:0},
+{row:2,col:63,value:0},
+{row:2,col:64,value:0},
+{row:2,col:65,value:0},
+{row:2,col:66,value:0},
+{row:2,col:67,value:0},
+{row:2,col:68,value:0},
+{row:3,col:0,value:0},
+{row:3,col:1,value:1},
+{row:3,col:2,value:1},
+{row:3,col:3,value:3},
+{row:3,col:4,value:3},
+{row:3,col:5,value:5},
+{row:3,col:6,value:6},
+{row:3,col:7,value:7},
+{row:3,col:8,value:1},
+{row:3,col:9,value:44},
+{row:3,col:10,value:34},
+{row:3,col:11,value:3},
+{row:3,col:12,value:3},
+{row:3,col:13,value:3},
+{row:3,col:14,value:5},
+{row:3,col:15,value:5},
+{row:3,col:16,value:5},
+{row:3,col:17,value:6},
+{row:3,col:18,value:6},
+{row:3,col:19,value:6},
+{row:3,col:20,value:6},
+{row:3,col:21,value:6},
+{row:3,col:22,value:22},
+{row:3,col:23,value:22},
+{row:3,col:24,value:22},
+{row:3,col:25,value:22},
+{row:3,col:26,value:22},
+{row:3,col:27,value:22},
+{row:3,col:28,value:22},
+{row:3,col:29,value:29},
+{row:3,col:30,value:29},
+{row:3,col:31,value:29},
+{row:3,col:32,value:29},
+{row:3,col:33,value:29},
+{row:3,col:34,value:34},
+{row:3,col:35,value:36},
+{row:3,col:36,value:35},
+{row:3,col:37,value:37},
+{row:3,col:38,value:38},
+{row:3,col:39,value:39},
+{row:3,col:40,value:34},
+{row:3,col:41,value:0},
+{row:3,col:42,value:34},
+{row:3,col:43,value:34},
+{row:3,col:44,value:44},
+{row:3,col:45,value:44},
+{row:3,col:46,value:48},
+{row:3,col:47,value:48},
+{row:3,col:48,value:48},
+{row:3,col:49,value:48},
+{row:3,col:50,value:48},
+{row:3,col:51,value:48},
+{row:3,col:52,value:0},
+{row:3,col:53,value:0},
+{row:3,col:54,value:0},
+{row:3,col:55,value:0},
+{row:3,col:56,value:0},
+{row:3,col:57,value:0},
+{row:3,col:58,value:0},
+{row:3,col:59,value:0},
+{row:3,col:60,value:0},
+{row:3,col:61,value:0},
+{row:3,col:62,value:0},
+{row:3,col:63,value:0},
+{row:3,col:64,value:0},
+{row:3,col:65,value:0},
+{row:3,col:66,value:0},
+{row:3,col:67,value:0},
+{row:3,col:68,value:0},
+{row:4,col:0,value:0},
+{row:4,col:1,value:1},
+{row:4,col:2,value:1},
+{row:4,col:3,value:3},
+{row:4,col:4,value:3},
+{row:4,col:5,value:5},
+{row:4,col:6,value:6},
+{row:4,col:7,value:7},
+{row:4,col:8,value:1},
+{row:4,col:9,value:44},
+{row:4,col:10,value:34},
+{row:4,col:11,value:3},
+{row:4,col:12,value:3},
+{row:4,col:13,value:3},
+{row:4,col:14,value:5},
+{row:4,col:15,value:5},
+{row:4,col:16,value:5},
+{row:4,col:17,value:6},
+{row:4,col:18,value:6},
+{row:4,col:19,value:6},
+{row:4,col:20,value:6},
+{row:4,col:21,value:6},
+{row:4,col:22,value:22},
+{row:4,col:23,value:22},
+{row:4,col:24,value:22},
+{row:4,col:25,value:22},
+{row:4,col:26,value:22},
+{row:4,col:27,value:22},
+{row:4,col:28,value:22},
+{row:4,col:29,value:29},
+{row:4,col:30,value:29},
+{row:4,col:31,value:29},
+{row:4,col:32,value:29},
+{row:4,col:33,value:29},
+{row:4,col:34,value:34},
+{row:4,col:35,value:36},
+{row:4,col:36,value:35},
+{row:4,col:37,value:37},
+{row:4,col:38,value:38},
+{row:4,col:39,value:39},
+{row:4,col:40,value:34},
+{row:4,col:41,value:0},
+{row:4,col:42,value:34},
+{row:4,col:43,value:34},
+{row:4,col:44,value:44},
+{row:4,col:45,value:44},
+{row:4,col:46,value:48},
+{row:4,col:47,value:48},
+{row:4,col:48,value:48},
+{row:4,col:49,value:48},
+{row:4,col:50,value:48},
+{row:4,col:51,value:48},
+{row:4,col:52,value:0},
+{row:4,col:53,value:0},
+{row:4,col:54,value:0},
+{row:4,col:55,value:0},
+{row:4,col:56,value:0},
+{row:4,col:57,value:0},
+{row:4,col:58,value:0},
+{row:4,col:59,value:0},
+{row:4,col:60,value:0},
+{row:4,col:61,value:0},
+{row:4,col:62,value:0},
+{row:4,col:63,value:0},
+{row:4,col:64,value:0},
+{row:4,col:65,value:0},
+{row:4,col:66,value:0},
+{row:4,col:67,value:0},
+{row:4,col:68,value:0},
+{row:5,col:0,value:0},
+{row:5,col:1,value:1},
+{row:5,col:2,value:1},
+{row:5,col:3,value:3},
+{row:5,col:4,value:3},
+{row:5,col:5,value:5},
+{row:5,col:6,value:6},
+{row:5,col:7,value:7},
+{row:5,col:8,value:45},
+{row:5,col:9,value:44},
+{row:5,col:10,value:10},
+{row:5,col:11,value:3},
+{row:5,col:12,value:3},
+{row:5,col:13,value:3},
+{row:5,col:14,value:5},
+{row:5,col:15,value:5},
+{row:5,col:16,value:5},
+{row:5,col:17,value:20},
+{row:5,col:18,value:6},
+{row:5,col:19,value:6},
+{row:5,col:20,value:6},
+{row:5,col:21,value:6},
+{row:5,col:22,value:22},
+{row:5,col:23,value:22},
+{row:5,col:24,value:22},
+{row:5,col:25,value:22},
+{row:5,col:26,value:22},
+{row:5,col:27,value:22},
+{row:5,col:28,value:22},
+{row:5,col:29,value:29},
+{row:5,col:30,value:29},
+{row:5,col:31,value:29},
+{row:5,col:32,value:29},
+{row:5,col:33,value:29},
+{row:5,col:34,value:35},
+{row:5,col:35,value:35},
+{row:5,col:36,value:35},
+{row:5,col:37,value:40},
+{row:5,col:38,value:38},
+{row:5,col:39,value:39},
+{row:5,col:40,value:34},
+{row:5,col:41,value:0},
+{row:5,col:42,value:34},
+{row:5,col:43,value:34},
+{row:5,col:44,value:44},
+{row:5,col:45,value:44},
+{row:5,col:46,value:48},
+{row:5,col:47,value:48},
+{row:5,col:48,value:48},
+{row:5,col:49,value:48},
+{row:5,col:50,value:51},
+{row:5,col:51,value:48},
+{row:5,col:52,value:0},
+{row:5,col:53,value:0},
+{row:5,col:54,value:0},
+{row:5,col:55,value:0},
+{row:5,col:56,value:0},
+{row:5,col:57,value:0},
+{row:5,col:58,value:0},
+{row:5,col:59,value:0},
+{row:5,col:60,value:0},
+{row:5,col:61,value:0},
+{row:5,col:62,value:0},
+{row:5,col:63,value:0},
+{row:5,col:64,value:0},
+{row:5,col:65,value:0},
+{row:5,col:66,value:0},
+{row:5,col:67,value:0},
+{row:5,col:68,value:0},
+{row:6,col:0,value:0},
+{row:6,col:1,value:1},
+{row:6,col:2,value:1},
+{row:6,col:3,value:3},
+{row:6,col:4,value:3},
+{row:6,col:5,value:5},
+{row:6,col:6,value:6},
+{row:6,col:7,value:7},
+{row:6,col:8,value:1},
+{row:6,col:9,value:44},
+{row:6,col:10,value:10},
+{row:6,col:11,value:3},
+{row:6,col:12,value:3},
+{row:6,col:13,value:3},
+{row:6,col:14,value:5},
+{row:6,col:15,value:5},
+{row:6,col:16,value:5},
+{row:6,col:17,value:6},
+{row:6,col:18,value:6},
+{row:6,col:19,value:6},
+{row:6,col:20,value:6},
+{row:6,col:21,value:6},
+{row:6,col:22,value:22},
+{row:6,col:23,value:22},
+{row:6,col:24,value:22},
+{row:6,col:25,value:22},
+{row:6,col:26,value:22},
+{row:6,col:27,value:22},
+{row:6,col:28,value:22},
+{row:6,col:29,value:29},
+{row:6,col:30,value:29},
+{row:6,col:31,value:29},
+{row:6,col:32,value:29},
+{row:6,col:33,value:29},
+{row:6,col:34,value:35},
+{row:6,col:35,value:35},
+{row:6,col:36,value:35},
+{row:6,col:37,value:38},
+{row:6,col:38,value:42},
+{row:6,col:39,value:39},
+{row:6,col:40,value:40},
+{row:6,col:41,value:0},
+{row:6,col:42,value:34},
+{row:6,col:43,value:34},
+{row:6,col:44,value:44},
+{row:6,col:45,value:44},
+{row:6,col:46,value:48},
+{row:6,col:47,value:48},
+{row:6,col:48,value:48},
+{row:6,col:49,value:48},
+{row:6,col:50,value:48},
+{row:6,col:51,value:48},
+{row:6,col:52,value:0},
+{row:6,col:53,value:0},
+{row:6,col:54,value:0},
+{row:6,col:55,value:0},
+{row:6,col:56,value:0},
+{row:6,col:57,value:0},
+{row:6,col:58,value:0},
+{row:6,col:59,value:0},
+{row:6,col:60,value:0},
+{row:6,col:61,value:0},
+{row:6,col:62,value:0},
+{row:6,col:63,value:0},
+{row:6,col:64,value:0},
+{row:6,col:65,value:0},
+{row:6,col:66,value:0},
+{row:6,col:67,value:0},
+{row:6,col:68,value:0},
+{row:7,col:0,value:0},
+{row:7,col:1,value:1},
+{row:7,col:2,value:1},
+{row:7,col:3,value:3},
+{row:7,col:4,value:3},
+{row:7,col:5,value:5},
+{row:7,col:6,value:6},
+{row:7,col:7,value:7},
+{row:7,col:8,value:1},
+{row:7,col:9,value:44},
+{row:7,col:10,value:10},
+{row:7,col:11,value:3},
+{row:7,col:12,value:3},
+{row:7,col:13,value:3},
+{row:7,col:14,value:5},
+{row:7,col:15,value:5},
+{row:7,col:16,value:5},
+{row:7,col:17,value:6},
+{row:7,col:18,value:6},
+{row:7,col:19,value:6},
+{row:7,col:20,value:6},
+{row:7,col:21,value:6},
+{row:7,col:22,value:22},
+{row:7,col:23,value:22},
+{row:7,col:24,value:22},
+{row:7,col:25,value:22},
+{row:7,col:26,value:22},
+{row:7,col:27,value:22},
+{row:7,col:28,value:22},
+{row:7,col:29,value:29},
+{row:7,col:30,value:29},
+{row:7,col:31,value:29},
+{row:7,col:32,value:29},
+{row:7,col:33,value:29},
+{row:7,col:34,value:35},
+{row:7,col:35,value:35},
+{row:7,col:36,value:35},
+{row:7,col:37,value:40},
+{row:7,col:38,value:38},
+{row:7,col:39,value:39},
+{row:7,col:40,value:34},
+{row:7,col:41,value:0},
+{row:7,col:42,value:34},
+{row:7,col:43,value:34},
+{row:7,col:44,value:44},
+{row:7,col:45,value:44},
+{row:7,col:46,value:48},
+{row:7,col:47,value:48},
+{row:7,col:48,value:48},
+{row:7,col:49,value:48},
+{row:7,col:50,value:48},
+{row:7,col:51,value:48},
+{row:7,col:52,value:0},
+{row:7,col:53,value:0},
+{row:7,col:54,value:0},
+{row:7,col:55,value:0},
+{row:7,col:56,value:0},
+{row:7,col:57,value:0},
+{row:7,col:58,value:0},
+{row:7,col:59,value:0},
+{row:7,col:60,value:0},
+{row:7,col:61,value:0},
+{row:7,col:62,value:0},
+{row:7,col:63,value:0},
+{row:7,col:64,value:0},
+{row:7,col:65,value:0},
+{row:7,col:66,value:0},
+{row:7,col:67,value:0},
+{row:7,col:68,value:0},
+{row:8,col:0,value:0},
+{row:8,col:1,value:2},
+{row:8,col:2,value:1},
+{row:8,col:3,value:4},
+{row:8,col:4,value:3},
+{row:8,col:5,value:5},
+{row:8,col:6,value:6},
+{row:8,col:7,value:7},
+{row:8,col:8,value:1},
+{row:8,col:9,value:44},
+{row:8,col:10,value:10},
+{row:8,col:11,value:3},
+{row:8,col:12,value:3},
+{row:8,col:13,value:3},
+{row:8,col:14,value:5},
+{row:8,col:15,value:5},
+{row:8,col:16,value:5},
+{row:8,col:17,value:6},
+{row:8,col:18,value:6},
+{row:8,col:19,value:6},
+{row:8,col:20,value:6},
+{row:8,col:21,value:6},
+{row:8,col:22,value:22},
+{row:8,col:23,value:22},
+{row:8,col:24,value:22},
+{row:8,col:25,value:22},
+{row:8,col:26,value:22},
+{row:8,col:27,value:22},
+{row:8,col:28,value:22},
+{row:8,col:29,value:29},
+{row:8,col:30,value:29},
+{row:8,col:31,value:29},
+{row:8,col:32,value:29},
+{row:8,col:33,value:29},
+{row:8,col:34,value:35},
+{row:8,col:35,value:35},
+{row:8,col:36,value:35},
+{row:8,col:37,value:40},
+{row:8,col:38,value:38},
+{row:8,col:39,value:39},
+{row:8,col:40,value:40},
+{row:8,col:41,value:0},
+{row:8,col:42,value:34},
+{row:8,col:43,value:34},
+{row:8,col:44,value:44},
+{row:8,col:45,value:44},
+{row:8,col:46,value:48},
+{row:8,col:47,value:48},
+{row:8,col:48,value:48},
+{row:8,col:49,value:48},
+{row:8,col:50,value:48},
+{row:8,col:51,value:48},
+{row:8,col:52,value:0},
+{row:8,col:53,value:0},
+{row:8,col:54,value:0},
+{row:8,col:55,value:0},
+{row:8,col:56,value:0},
+{row:8,col:57,value:0},
+{row:8,col:58,value:0},
+{row:8,col:59,value:0},
+{row:8,col:60,value:0},
+{row:8,col:61,value:0},
+{row:8,col:62,value:0},
+{row:8,col:63,value:0},
+{row:8,col:64,value:0},
+{row:8,col:65,value:0},
+{row:8,col:66,value:0},
+{row:8,col:67,value:0},
+{row:8,col:68,value:0},
+{row:9,col:0,value:0},
+{row:9,col:1,value:1},
+{row:9,col:2,value:1},
+{row:9,col:3,value:3},
+{row:9,col:4,value:3},
+{row:9,col:5,value:5},
+{row:9,col:6,value:6},
+{row:9,col:7,value:7},
+{row:9,col:8,value:1},
+{row:9,col:9,value:44},
+{row:9,col:10,value:10},
+{row:9,col:11,value:3},
+{row:9,col:12,value:3},
+{row:9,col:13,value:3},
+{row:9,col:14,value:5},
+{row:9,col:15,value:5},
+{row:9,col:16,value:5},
+{row:9,col:17,value:6},
+{row:9,col:18,value:6},
+{row:9,col:19,value:6},
+{row:9,col:20,value:6},
+{row:9,col:21,value:6},
+{row:9,col:22,value:22},
+{row:9,col:23,value:22},
+{row:9,col:24,value:22},
+{row:9,col:25,value:22},
+{row:9,col:26,value:22},
+{row:9,col:27,value:22},
+{row:9,col:28,value:22},
+{row:9,col:29,value:29},
+{row:9,col:30,value:29},
+{row:9,col:31,value:29},
+{row:9,col:32,value:29},
+{row:9,col:33,value:29},
+{row:9,col:34,value:35},
+{row:9,col:35,value:35},
+{row:9,col:36,value:35},
+{row:9,col:37,value:39},
+{row:9,col:38,value:38},
+{row:9,col:39,value:42},
+{row:9,col:40,value:40},
+{row:9,col:41,value:0},
+{row:9,col:42,value:34},
+{row:9,col:43,value:34},
+{row:9,col:44,value:44},
+{row:9,col:45,value:44},
+{row:9,col:46,value:48},
+{row:9,col:47,value:48},
+{row:9,col:48,value:48},
+{row:9,col:49,value:48},
+{row:9,col:50,value:48},
+{row:9,col:51,value:48},
+{row:9,col:52,value:0},
+{row:9,col:53,value:0},
+{row:9,col:54,value:0},
+{row:9,col:55,value:0},
+{row:9,col:56,value:0},
+{row:9,col:57,value:0},
+{row:9,col:58,value:0},
+{row:9,col:59,value:0},
+{row:9,col:60,value:0},
+{row:9,col:61,value:0},
+{row:9,col:62,value:0},
+{row:9,col:63,value:0},
+{row:9,col:64,value:0},
+{row:9,col:65,value:0},
+{row:9,col:66,value:0},
+{row:9,col:67,value:0},
+{row:9,col:68,value:0},
+{row:10,col:0,value:0},
+{row:10,col:1,value:1},
+{row:10,col:2,value:1},
+{row:10,col:3,value:3},
+{row:10,col:4,value:3},
+{row:10,col:5,value:5},
+{row:10,col:6,value:6},
+{row:10,col:7,value:7},
+{row:10,col:8,value:1},
+{row:10,col:9,value:44},
+{row:10,col:10,value:10},
+{row:10,col:11,value:3},
+{row:10,col:12,value:3},
+{row:10,col:13,value:3},
+{row:10,col:14,value:5},
+{row:10,col:15,value:5},
+{row:10,col:16,value:5},
+{row:10,col:17,value:6},
+{row:10,col:18,value:6},
+{row:10,col:19,value:6},
+{row:10,col:20,value:21},
+{row:10,col:21,value:24},
+{row:10,col:22,value:23},
+{row:10,col:23,value:24},
+{row:10,col:24,value:24},
+{row:10,col:25,value:22},
+{row:10,col:26,value:22},
+{row:10,col:27,value:22},
+{row:10,col:28,value:22},
+{row:10,col:29,value:30},
+{row:10,col:30,value:31},
+{row:10,col:31,value:31},
+{row:10,col:32,value:29},
+{row:10,col:33,value:29},
+{row:10,col:34,value:35},
+{row:10,col:35,value:35},
+{row:10,col:36,value:35},
+{row:10,col:37,value:40},
+{row:10,col:38,value:38},
+{row:10,col:39,value:39},
+{row:10,col:40,value:34},
+{row:10,col:41,value:0},
+{row:10,col:42,value:34},
+{row:10,col:43,value:34},
+{row:10,col:44,value:44},
+{row:10,col:45,value:44},
+{row:10,col:46,value:47},
+{row:10,col:47,value:50},
+{row:10,col:48,value:49},
+{row:10,col:49,value:50},
+{row:10,col:50,value:50},
+{row:10,col:51,value:49},
+{row:10,col:52,value:0},
+{row:10,col:53,value:0},
+{row:10,col:54,value:0},
+{row:10,col:55,value:0},
+{row:10,col:56,value:0},
+{row:10,col:57,value:0},
+{row:10,col:58,value:0},
+{row:10,col:59,value:0},
+{row:10,col:60,value:0},
+{row:10,col:61,value:0},
+{row:10,col:62,value:0},
+{row:10,col:63,value:0},
+{row:10,col:64,value:0},
+{row:10,col:65,value:0},
+{row:10,col:66,value:0},
+{row:10,col:67,value:0},
+{row:10,col:68,value:0},
+{row:11,col:0,value:0},
+{row:11,col:1,value:1},
+{row:11,col:2,value:1},
+{row:11,col:3,value:3},
+{row:11,col:4,value:3},
+{row:11,col:5,value:5},
+{row:11,col:6,value:6},
+{row:11,col:7,value:7},
+{row:11,col:8,value:9},
+{row:11,col:9,value:44},
+{row:11,col:10,value:43},
+{row:11,col:11,value:12},
+{row:11,col:12,value:3},
+{row:11,col:13,value:3},
+{row:11,col:14,value:15},
+{row:11,col:15,value:5},
+{row:11,col:16,value:5},
+{row:11,col:17,value:18},
+{row:11,col:18,value:6},
+{row:11,col:19,value:6},
+{row:11,col:20,value:6},
+{row:11,col:21,value:6},
+{row:11,col:22,value:22},
+{row:11,col:23,value:22},
+{row:11,col:24,value:22},
+{row:11,col:25,value:26},
+{row:11,col:26,value:22},
+{row:11,col:27,value:22},
+{row:11,col:28,value:22},
+{row:11,col:29,value:29},
+{row:11,col:30,value:29},
+{row:11,col:31,value:29},
+{row:11,col:32,value:33},
+{row:11,col:33,value:29},
+{row:11,col:34,value:43},
+{row:11,col:35,value:43},
+{row:11,col:36,value:43},
+{row:11,col:37,value:40},
+{row:11,col:38,value:38},
+{row:11,col:39,value:39},
+{row:11,col:40,value:34},
+{row:11,col:41,value:0},
+{row:11,col:42,value:43},
+{row:11,col:43,value:34},
+{row:11,col:44,value:44},
+{row:11,col:45,value:44},
+{row:11,col:46,value:48},
+{row:11,col:47,value:48},
+{row:11,col:48,value:48},
+{row:11,col:49,value:48},
+{row:11,col:50,value:48},
+{row:11,col:51,value:48},
+{row:11,col:52,value:0},
+{row:11,col:53,value:0},
+{row:11,col:54,value:0},
+{row:11,col:55,value:0},
+{row:11,col:56,value:0},
+{row:11,col:57,value:0},
+{row:11,col:58,value:0},
+{row:11,col:59,value:0},
+{row:11,col:60,value:0},
+{row:11,col:61,value:0},
+{row:11,col:62,value:0},
+{row:11,col:63,value:0},
+{row:11,col:64,value:0},
+{row:11,col:65,value:0},
+{row:11,col:66,value:0},
+{row:11,col:67,value:0},
+{row:11,col:68,value:0},
+{row:12,col:0,value:0},
+{row:12,col:1,value:8},
+{row:12,col:2,value:1},
+{row:12,col:3,value:11},
+{row:12,col:4,value:3},
+{row:12,col:5,value:14},
+{row:12,col:6,value:17},
+{row:12,col:7,value:7},
+{row:12,col:8,value:1},
+{row:12,col:9,value:44},
+{row:12,col:10,value:10},
+{row:12,col:11,value:3},
+{row:12,col:12,value:3},
+{row:12,col:13,value:3},
+{row:12,col:14,value:5},
+{row:12,col:15,value:5},
+{row:12,col:16,value:5},
+{row:12,col:17,value:6},
+{row:12,col:18,value:6},
+{row:12,col:19,value:6},
+{row:12,col:20,value:6},
+{row:12,col:21,value:6},
+{row:12,col:22,value:25},
+{row:12,col:23,value:25},
+{row:12,col:24,value:25},
+{row:12,col:25,value:22},
+{row:12,col:26,value:22},
+{row:12,col:27,value:22},
+{row:12,col:28,value:22},
+{row:12,col:29,value:32},
+{row:12,col:30,value:32},
+{row:12,col:31,value:32},
+{row:12,col:32,value:29},
+{row:12,col:33,value:29},
+{row:12,col:34,value:35},
+{row:12,col:35,value:35},
+{row:12,col:36,value:35},
+{row:12,col:37,value:40},
+{row:12,col:38,value:38},
+{row:12,col:39,value:39},
+{row:12,col:40,value:40},
+{row:12,col:41,value:0},
+{row:12,col:42,value:34},
+{row:12,col:43,value:34},
+{row:12,col:44,value:44},
+{row:12,col:45,value:44},
+{row:12,col:46,value:48},
+{row:12,col:47,value:48},
+{row:12,col:48,value:48},
+{row:12,col:49,value:48},
+{row:12,col:50,value:48},
+{row:12,col:51,value:48},
+{row:12,col:52,value:0},
+{row:12,col:53,value:0},
+{row:12,col:54,value:0},
+{row:12,col:55,value:0},
+{row:12,col:56,value:0},
+{row:12,col:57,value:0},
+{row:12,col:58,value:0},
+{row:12,col:59,value:0},
+{row:12,col:60,value:0},
+{row:12,col:61,value:0},
+{row:12,col:62,value:0},
+{row:12,col:63,value:0},
+{row:12,col:64,value:0},
+{row:12,col:65,value:0},
+{row:12,col:66,value:0},
+{row:12,col:67,value:0},
+{row:12,col:68,value:0},
+{row:13,col:0,value:0},
+{row:13,col:1,value:1},
+{row:13,col:2,value:1},
+{row:13,col:3,value:3},
+{row:13,col:4,value:3},
+{row:13,col:5,value:5},
+{row:13,col:6,value:6},
+{row:13,col:7,value:7},
+{row:13,col:8,value:1},
+{row:13,col:9,value:44},
+{row:13,col:10,value:10},
+{row:13,col:11,value:3},
+{row:13,col:12,value:3},
+{row:13,col:13,value:3},
+{row:13,col:14,value:5},
+{row:13,col:15,value:5},
+{row:13,col:16,value:5},
+{row:13,col:17,value:6},
+{row:13,col:18,value:6},
+{row:13,col:19,value:6},
+{row:13,col:20,value:6},
+{row:13,col:21,value:6},
+{row:13,col:22,value:22},
+{row:13,col:23,value:22},
+{row:13,col:24,value:22},
+{row:13,col:25,value:22},
+{row:13,col:26,value:22},
+{row:13,col:27,value:22},
+{row:13,col:28,value:22},
+{row:13,col:29,value:29},
+{row:13,col:30,value:29},
+{row:13,col:31,value:29},
+{row:13,col:32,value:29},
+{row:13,col:33,value:29},
+{row:13,col:34,value:35},
+{row:13,col:35,value:37},
+{row:13,col:36,value:37},
+{row:13,col:37,value:40},
+{row:13,col:38,value:38},
+{row:13,col:39,value:39},
+{row:13,col:40,value:40},
+{row:13,col:41,value:0},
+{row:13,col:42,value:34},
+{row:13,col:43,value:34},
+{row:13,col:44,value:44},
+{row:13,col:45,value:44},
+{row:13,col:46,value:48},
+{row:13,col:47,value:48},
+{row:13,col:48,value:48},
+{row:13,col:49,value:48},
+{row:13,col:50,value:48},
+{row:13,col:51,value:48},
+{row:13,col:52,value:0},
+{row:13,col:53,value:0},
+{row:13,col:54,value:0},
+{row:13,col:55,value:0},
+{row:13,col:56,value:0},
+{row:13,col:57,value:0},
+{row:13,col:58,value:0},
+{row:13,col:59,value:0},
+{row:13,col:60,value:0},
+{row:13,col:61,value:0},
+{row:13,col:62,value:0},
+{row:13,col:63,value:0},
+{row:13,col:64,value:0},
+{row:13,col:65,value:0},
+{row:13,col:66,value:0},
+{row:13,col:67,value:0},
+{row:13,col:68,value:0},
+{row:14,col:0,value:0},
+{row:14,col:1,value:1},
+{row:14,col:2,value:1},
+{row:14,col:3,value:3},
+{row:14,col:4,value:3},
+{row:14,col:5,value:5},
+{row:14,col:6,value:6},
+{row:14,col:7,value:7},
+{row:14,col:8,value:1},
+{row:14,col:9,value:1},
+{row:14,col:10,value:1},
+{row:14,col:11,value:3},
+{row:14,col:12,value:3},
+{row:14,col:13,value:3},
+{row:14,col:14,value:5},
+{row:14,col:15,value:5},
+{row:14,col:16,value:5},
+{row:14,col:17,value:6},
+{row:14,col:18,value:6},
+{row:14,col:19,value:6},
+{row:14,col:20,value:6},
+{row:14,col:21,value:6},
+{row:14,col:22,value:22},
+{row:14,col:23,value:22},
+{row:14,col:24,value:6},
+{row:14,col:25,value:22},
+{row:14,col:26,value:22},
+{row:14,col:27,value:22},
+{row:14,col:28,value:22},
+{row:14,col:29,value:29},
+{row:14,col:30,value:29},
+{row:14,col:31,value:6},
+{row:14,col:32,value:29},
+{row:14,col:33,value:29},
+{row:14,col:34,value:1},
+{row:14,col:35,value:1},
+{row:14,col:36,value:1},
+{row:14,col:37,value:1},
+{row:14,col:38,value:38},
+{row:14,col:39,value:39},
+{row:14,col:40,value:1},
+{row:14,col:41,value:0},
+{row:14,col:42,value:1},
+{row:14,col:43,value:1},
+{row:14,col:44,value:1},
+{row:14,col:45,value:44},
+{row:14,col:46,value:1},
+{row:14,col:47,value:1},
+{row:14,col:48,value:48},
+{row:14,col:49,value:48},
+{row:14,col:50,value:1},
+{row:14,col:51,value:1},
+{row:14,col:52,value:0},
+{row:14,col:53,value:0},
+{row:14,col:54,value:0},
+{row:14,col:55,value:0},
+{row:14,col:56,value:0},
+{row:14,col:57,value:0},
+{row:14,col:58,value:0},
+{row:14,col:59,value:0},
+{row:14,col:60,value:0},
+{row:14,col:61,value:0},
+{row:14,col:62,value:0},
+{row:14,col:63,value:0},
+{row:14,col:64,value:0},
+{row:14,col:65,value:0},
+{row:14,col:66,value:0},
+{row:14,col:67,value:0},
+{row:14,col:68,value:0},
+{row:15,col:0,value:0},
+{row:15,col:1,value:1},
+{row:15,col:2,value:1},
+{row:15,col:3,value:3},
+{row:15,col:4,value:3},
+{row:15,col:5,value:5},
+{row:15,col:6,value:6},
+{row:15,col:7,value:7},
+{row:15,col:8,value:44},
+{row:15,col:9,value:44},
+{row:15,col:10,value:10},
+{row:15,col:11,value:3},
+{row:15,col:12,value:3},
+{row:15,col:13,value:3},
+{row:15,col:14,value:5},
+{row:15,col:15,value:5},
+{row:15,col:16,value:5},
+{row:15,col:17,value:6},
+{row:15,col:18,value:6},
+{row:15,col:19,value:6},
+{row:15,col:20,value:6},
+{row:15,col:21,value:6},
+{row:15,col:22,value:22},
+{row:15,col:23,value:22},
+{row:15,col:24,value:22},
+{row:15,col:25,value:22},
+{row:15,col:26,value:22},
+{row:15,col:27,value:22},
+{row:15,col:28,value:22},
+{row:15,col:29,value:29},
+{row:15,col:30,value:29},
+{row:15,col:31,value:29},
+{row:15,col:32,value:29},
+{row:15,col:33,value:29},
+{row:15,col:34,value:35},
+{row:15,col:35,value:35},
+{row:15,col:36,value:35},
+{row:15,col:37,value:40},
+{row:15,col:38,value:38},
+{row:15,col:39,value:39},
+{row:15,col:40,value:34},
+{row:15,col:41,value:0},
+{row:15,col:42,value:34},
+{row:15,col:43,value:34},
+{row:15,col:44,value:44},
+{row:15,col:45,value:44},
+{row:15,col:46,value:48},
+{row:15,col:47,value:48},
+{row:15,col:48,value:48},
+{row:15,col:49,value:48},
+{row:15,col:50,value:48},
+{row:15,col:51,value:48},
+{row:15,col:52,value:0},
+{row:15,col:53,value:0},
+{row:15,col:54,value:0},
+{row:15,col:55,value:0},
+{row:15,col:56,value:0},
+{row:15,col:57,value:0},
+{row:15,col:58,value:0},
+{row:15,col:59,value:0},
+{row:15,col:60,value:0},
+{row:15,col:61,value:0},
+{row:15,col:62,value:0},
+{row:15,col:63,value:0},
+{row:15,col:64,value:0},
+{row:15,col:65,value:0},
+{row:15,col:66,value:0},
+{row:15,col:67,value:0},
+{row:15,col:68,value:0},
+{row:16,col:0,value:0},
+{row:16,col:1,value:1},
+{row:16,col:2,value:1},
+{row:16,col:3,value:3},
+{row:16,col:4,value:3},
+{row:16,col:5,value:5},
+{row:16,col:6,value:6},
+{row:16,col:7,value:7},
+{row:16,col:8,value:1},
+{row:16,col:9,value:44},
+{row:16,col:10,value:10},
+{row:16,col:11,value:3},
+{row:16,col:12,value:3},
+{row:16,col:13,value:3},
+{row:16,col:14,value:5},
+{row:16,col:15,value:5},
+{row:16,col:16,value:5},
+{row:16,col:17,value:6},
+{row:16,col:18,value:6},
+{row:16,col:19,value:6},
+{row:16,col:20,value:6},
+{row:16,col:21,value:6},
+{row:16,col:22,value:22},
+{row:16,col:23,value:22},
+{row:16,col:24,value:22},
+{row:16,col:25,value:22},
+{row:16,col:26,value:22},
+{row:16,col:27,value:22},
+{row:16,col:28,value:22},
+{row:16,col:29,value:29},
+{row:16,col:30,value:29},
+{row:16,col:31,value:29},
+{row:16,col:32,value:29},
+{row:16,col:33,value:29},
+{row:16,col:34,value:35},
+{row:16,col:35,value:35},
+{row:16,col:36,value:35},
+{row:16,col:37,value:40},
+{row:16,col:38,value:38},
+{row:16,col:39,value:39},
+{row:16,col:40,value:40},
+{row:16,col:41,value:0},
+{row:16,col:42,value:34},
+{row:16,col:43,value:34},
+{row:16,col:44,value:44},
+{row:16,col:45,value:44},
+{row:16,col:46,value:48},
+{row:16,col:47,value:48},
+{row:16,col:48,value:48},
+{row:16,col:49,value:48},
+{row:16,col:50,value:48},
+{row:16,col:51,value:48},
+{row:16,col:52,value:0},
+{row:16,col:53,value:0},
+{row:16,col:54,value:0},
+{row:16,col:55,value:0},
+{row:16,col:56,value:0},
+{row:16,col:57,value:0},
+{row:16,col:58,value:0},
+{row:16,col:59,value:0},
+{row:16,col:60,value:0},
+{row:16,col:61,value:0},
+{row:16,col:62,value:0},
+{row:16,col:63,value:0},
+{row:16,col:64,value:0},
+{row:16,col:65,value:0},
+{row:16,col:66,value:0},
+{row:16,col:67,value:0},
+{row:16,col:68,value:0},
+{row:17,col:0,value:0},
+{row:17,col:1,value:1},
+{row:17,col:2,value:1},
+{row:17,col:3,value:3},
+{row:17,col:4,value:3},
+{row:17,col:5,value:5},
+{row:17,col:6,value:6},
+{row:17,col:7,value:7},
+{row:17,col:8,value:10},
+{row:17,col:9,value:10},
+{row:17,col:10,value:10},
+{row:17,col:11,value:3},
+{row:17,col:12,value:13},
+{row:17,col:13,value:13},
+{row:17,col:14,value:5},
+{row:17,col:15,value:16},
+{row:17,col:16,value:16},
+{row:17,col:17,value:6},
+{row:17,col:18,value:19},
+{row:17,col:19,value:19},
+{row:17,col:20,value:6},
+{row:17,col:21,value:6},
+{row:17,col:22,value:22},
+{row:17,col:23,value:22},
+{row:17,col:24,value:22},
+{row:17,col:25,value:28},
+{row:17,col:26,value:27},
+{row:17,col:27,value:22},
+{row:17,col:28,value:28},
+{row:17,col:29,value:29},
+{row:17,col:30,value:29},
+{row:17,col:31,value:29},
+{row:17,col:32,value:29},
+{row:17,col:33,value:33},
+{row:17,col:34,value:35},
+{row:17,col:35,value:35},
+{row:17,col:36,value:35},
+{row:17,col:37,value:40},
+{row:17,col:38,value:38},
+{row:17,col:39,value:39},
+{row:17,col:40,value:40},
+{row:17,col:41,value:0},
+{row:17,col:42,value:34},
+{row:17,col:43,value:34},
+{row:17,col:44,value:44},
+{row:17,col:45,value:44},
+{row:17,col:46,value:48},
+{row:17,col:47,value:48},
+{row:17,col:48,value:48},
+{row:17,col:49,value:48},
+{row:17,col:50,value:48},
+{row:17,col:51,value:48},
+{row:17,col:52,value:0},
+{row:17,col:53,value:0},
+{row:17,col:54,value:0},
+{row:17,col:55,value:0},
+{row:17,col:56,value:0},
+{row:17,col:57,value:0},
+{row:17,col:58,value:0},
+{row:17,col:59,value:0},
+{row:17,col:60,value:0},
+{row:17,col:61,value:0},
+{row:17,col:62,value:0},
+{row:17,col:63,value:0},
+{row:17,col:64,value:0},
+{row:17,col:65,value:0},
+{row:17,col:66,value:0},
+{row:17,col:67,value:0},
+{row:17,col:68,value:0},
+{row:18,col:0,value:0},
+{row:18,col:1,value:1},
+{row:18,col:2,value:1},
+{row:18,col:3,value:3},
+{row:18,col:4,value:3},
+{row:18,col:5,value:5},
+{row:18,col:6,value:6},
+{row:18,col:7,value:7},
+{row:18,col:8,value:1},
+{row:18,col:9,value:44},
+{row:18,col:10,value:10},
+{row:18,col:11,value:3},
+{row:18,col:12,value:3},
+{row:18,col:13,value:3},
+{row:18,col:14,value:5},
+{row:18,col:15,value:5},
+{row:18,col:16,value:5},
+{row:18,col:17,value:6},
+{row:18,col:18,value:6},
+{row:18,col:19,value:6},
+{row:18,col:20,value:6},
+{row:18,col:21,value:6},
+{row:18,col:22,value:22},
+{row:18,col:23,value:22},
+{row:18,col:24,value:22},
+{row:18,col:25,value:22},
+{row:18,col:26,value:22},
+{row:18,col:27,value:22},
+{row:18,col:28,value:22},
+{row:18,col:29,value:29},
+{row:18,col:30,value:29},
+{row:18,col:31,value:29},
+{row:18,col:32,value:29},
+{row:18,col:33,value:29},
+{row:18,col:34,value:35},
+{row:18,col:35,value:35},
+{row:18,col:36,value:35},
+{row:18,col:37,value:40},
+{row:18,col:38,value:38},
+{row:18,col:39,value:39},
+{row:18,col:40,value:40},
+{row:18,col:41,value:0},
+{row:18,col:42,value:34},
+{row:18,col:43,value:34},
+{row:18,col:44,value:44},
+{row:18,col:45,value:44},
+{row:18,col:46,value:48},
+{row:18,col:47,value:48},
+{row:18,col:48,value:48},
+{row:18,col:49,value:48},
+{row:18,col:50,value:48},
+{row:18,col:51,value:48},
+{row:18,col:52,value:0},
+{row:18,col:53,value:0},
+{row:18,col:54,value:0},
+{row:18,col:55,value:0},
+{row:18,col:56,value:0},
+{row:18,col:57,value:0},
+{row:18,col:58,value:0},
+{row:18,col:59,value:0},
+{row:18,col:60,value:0},
+{row:18,col:61,value:0},
+{row:18,col:62,value:0},
+{row:18,col:63,value:0},
+{row:18,col:64,value:0},
+{row:18,col:65,value:0},
+{row:18,col:66,value:0},
+{row:18,col:67,value:0},
+{row:18,col:68,value:0}
+];
+</script>
+<meta charset="utf-8">
+     <style>
+      /* disable text selection */
+      svg *::selection {
+         background : transparent;
+      }
+     
+      svg *::-moz-selection {
+         background:transparent;
+      } 
+     
+      svg *::-webkit-selection {
+         background:transparent;
+      }
+      rect.selection {
+        stroke          : #333;
+        stroke-dasharray: 4px;
+        stroke-opacity  : 0.5;
+        fill            : transparent;
+      }
+
+      rect.cell-border {
+        stroke: #eee;
+        stroke-width:0.3px;   
+      }
+
+      rect.cell-selected {
+        stroke: rgb(51,102,153);
+        stroke-width:0.5px;   
+      }
+
+      rect.cell-hover {
+        stroke: #F00;
+        stroke-width:0.3px;   
+      }
+
+      text.mono {
+        font-size: 10pt;
+        font-family: Consolas, courier;
+        fill: #aaa;
+      }
+
+      text.text-selected {
+        fill: #000;
+      }
+
+      text.text-highlight {
+        fill: #c00;
+        font-weight: bolder;
+      }
+      text.text-hover {
+        fill: #00C;
+      }
+      #tooltip {
+        position: absolute;
+        width: 300px;
+        height: auto;
+        padding: 10px;
+        background-color: white;
+        -webkit-border-radius: 10px;
+        -moz-border-radius: 10px;
+        border-radius: 10px;
+        -webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+        -moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+        pointer-events: none;
+      }
+
+      #tooltip.hidden {
+        display: none;
+      }
+
+      #tooltip p {
+        margin: 0;
+        font-family: sans-serif;
+        font-size: 12px;
+        line-height: 20px;
+      }
+    </style>
+
+</head>
+<div id="tooltip" class="hidden">
+        <p><span id="value"></p>
+</div>
+<!--
+Order: 
+  <select id="order">
+  <option value="hclust">default</option>
+  <option value="probecontrast">by probe name and contrast name</option>
+  <option value="probe">by probe name</option>
+  <option value="contrast">by contrast name</option>
+  <option value="custom">by log2 ratio</option>
+  </select>
+  </select>
+-->
+<div id="chart" style='overflow:auto;'></div>
+
+<script type="text/javascript">
+var margin = { top: 300, right: 10, bottom: 50, left: 150 },
+  cellSize=15;
+  width = cellSize*col_number, // - margin.left - margin.right,
+  height = cellSize*row_number , // - margin.top - margin.bottom,
+  //gridSize = Math.floor(width / 24),
+  // legendElementWidth = cellSize*2.5,
+  rowLabel = char_labels, // change to gene name or probe id
+  colLabel = state_labels;
+
+// d3.tsv("data_heatmap.tsv",
+// function(d) {
+//   return {
+//     row:   +d.row_idx,
+//     col:   +d.col_idx,
+//     value: +d.log2ratio
+//   };
+// },
+var d = (function (error, data) {
+  // var colorScale = d3.scale.quantile()
+  //     .domain([0,1 , 68])
+  //     .range(colors);
+  
+  var svg = d3.select("#chart").append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+      ;
+  var rowSortOrder=false;
+  var colSortOrder=false;
+  var rowLabels = svg.append("g")
+      .selectAll(".rowLabelg")
+      .data(rowLabel)
+      .enter()
+      .append("text")
+      .text(function (d) { return d; })
+      .attr("x", 0)
+      .attr("y", function (d, i) { return hcrow.indexOf(i+0) * cellSize; })
+      .style("text-anchor", "end")
+      .attr("transform", "translate(-6," + cellSize / 1.5 + ")")
+      .attr("class", function (d,i) { return "rowLabel mono r"+i;} ) 
+      .on("mouseover", function(d) {d3.select(this).classed("text-hover",true);})
+      .on("mouseout" , function(d) {d3.select(this).classed("text-hover",false);})
+      // .on("click", function(d,i) {rowSortOrder=!rowSortOrder; sortbylabel("r",i,rowSortOrder);d3.select("#order").property("selectedIndex", 4).node().focus();;})
+      ;
+
+  var colLabels = svg.append("g")
+      .selectAll(".colLabelg")
+      .data(colLabel)
+      .enter()
+      .append("text")
+      .text(function (d) { return d; })
+      .attr("x", 0)
+      .attr("y", function (d, i) { return hccol.indexOf(i+0) * cellSize; })
+      .style("text-anchor", "left")
+      .style("fill", function(d,i) { return colors[i]; })
+      .attr("transform", "translate("+(cellSize/2+3) + ",-6) rotate (-90)")
+      .attr("class",  function (d,i) { return "colLabel mono c"+i;} )
+      .on("mouseover", function(d) {d3.select(this).classed("text-hover",true);})
+      .on("mouseout" , function(d) {d3.select(this).classed("text-hover",false);})
+      // .on("click", function(d,i) {colSortOrder=!colSortOrder;  sortbylabel("c",i,colSortOrder);d3.select("#order").property("selectedIndex", 4).node().focus();;})
+      ;
+
+  var heatMap = svg.append("g").attr("class","g3")
+        .selectAll(".cellg")
+        .data(data,function(d){return d.row+":"+d.col;})
+        .enter()
+        .append("rect")
+        .attr("x", function(d) { return hccol.indexOf(d.col) * cellSize; })
+        .attr("y", function(d) { return hcrow.indexOf(d.row) * cellSize; })
+        .attr("class", function(d){return "cell cell-border cr"+(d.row-1)+" cc"+(d.col-1);})
+        .attr("width", cellSize)
+        .attr("height", cellSize)
+        .style("fill", function(d) { 
+          if( d.value!=0 && d.row != 18 && data[18*69+d.col].value == d.value) {
+            return "#FFFFFF";
+          } else {
+            // console.log(d.row + ' ' + d.col + ' ' + d.value);
+            return colors[d.value]; 
+          }
+        })
+        // .style("fill-opacity", "0.8" )
+        // .style("fill", function(d) { return colorScale(d.value); })
+        /* .on("click", function(d) {
+               var rowtext=d3.select(".r"+(d.row-1));
+               if(rowtext.classed("text-selected")==false){
+                   rowtext.classed("text-selected",true);
+               }else{
+                   rowtext.classed("text-selected",false);
+               }
+        })*/
+        .on("mouseover", function(d){
+               //highlight text
+               d3.select(this).classed("cell-hover",true);
+               d3.selectAll(".rowLabel").classed("text-highlight",function(r,ri){ return ri==(d.row);});
+               d3.selectAll(".colLabel").classed("text-highlight",function(c,ci){ return ci==(d.col);});
+        
+               //Update the tooltip position and value
+               d3.select("#tooltip")
+                 .style("left", (d3.event.pageX+10) + "px")
+                 .style("top", (d3.event.pageY-10) + "px")
+                 .select("#value")
+                 .html("<pre>   "+colLabel[d.col]+" ("+d.col+")<br/> + "+rowLabel[d.row].trim()+" ("+d.row+")<br/> = "+colLabel[d.value]+" ("+d.value+")</pre>");
+                 // row-col-idx:"+d.col+","+d.row+"\ncell-xy "+this.x.baseVal.value+", "+this.y.baseVal.value);  
+               //Show the tooltip
+               d3.select("#tooltip").classed("hidden", false);
+        })
+        .on("mouseout", function(){
+               d3.select(this).classed("cell-hover",false);
+               d3.selectAll(".rowLabel").classed("text-highlight",false);
+               d3.selectAll(".colLabel").classed("text-highlight",false);
+               d3.select("#tooltip").classed("hidden", true);
+        })
+        ;
+
+  // var legend = svg.selectAll(".legend")
+  //     .data([-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10])
+  //     .enter().append("g")
+  //     .attr("class", "legend");
+ 
+  // legend.append("rect")
+  //   .attr("x", function(d, i) { return legendElementWidth * i; })
+  //   .attr("y", height+(cellSize*2))
+  //   .attr("width", legendElementWidth)
+  //   .attr("height", cellSize)
+  //   .style("fill", function(d, i) { return colors[i]; });
+ 
+  // legend.append("text")
+  //   .attr("class", "mono")
+  //   .text(function(d) { return d; })
+  //   .attr("width", legendElementWidth)
+  //   .attr("x", function(d, i) { return legendElementWidth * i; })
+  //   .attr("y", height + (cellSize*4));
+
+// Change ordering of cells
+
+  function sortbylabel(rORc,i,sortOrder){
+       var t = svg.transition().duration(3000);
+       var log2r=[];
+       var sorted; // sorted is zero-based index
+       d3.selectAll(".c"+rORc+i) 
+         .filter(function(ce){
+            log2r.push(ce.value);
+          })
+       ;
+       if(rORc=="r"){ // sort log2ratio of a gene
+         sorted=d3.range(col_number).sort(function(a,b){ if(sortOrder){ return log2r[b]-log2r[a];}else{ return log2r[a]-log2r[b];}});
+         t.selectAll(".cell")
+           .attr("x", function(d) { return sorted.indexOf(d.col-1) * cellSize; })
+           ;
+         t.selectAll(".colLabel")
+          .attr("y", function (d, i) { return sorted.indexOf(i) * cellSize; })
+         ;
+       }else{ // sort log2ratio of a contrast
+         sorted=d3.range(row_number).sort(function(a,b){if(sortOrder){ return log2r[b]-log2r[a];}else{ return log2r[a]-log2r[b];}});
+         t.selectAll(".cell")
+           .attr("y", function(d) { return sorted.indexOf(d.row-1) * cellSize; })
+           ;
+         t.selectAll(".rowLabel")
+          .attr("y", function (d, i) { return sorted.indexOf(i) * cellSize; })
+         ;
+       }
+  }
+
+  d3.select("#order").on("change",function(){
+    order(this.value);
+  });
+  
+  function order(value){
+   if(value=="hclust"){
+    var t = svg.transition().duration(3000);
+    t.selectAll(".cell")
+      .attr("x", function(d) { return hccol.indexOf(d.col) * cellSize; })
+      .attr("y", function(d) { return hcrow.indexOf(d.row) * cellSize; })
+      ;
+
+    t.selectAll(".rowLabel")
+      .attr("y", function (d, i) { return hcrow.indexOf(i+0) * cellSize; })
+      ;
+
+    t.selectAll(".colLabel")
+      .attr("y", function (d, i) { return hccol.indexOf(i+0) * cellSize; })
+      ;
+
+   }else if (value=="probecontrast"){
+    var t = svg.transition().duration(3000);
+    t.selectAll(".cell")
+      .attr("x", function(d) { return (d.col - 1) * cellSize; })
+      .attr("y", function(d) { return (d.row - 1) * cellSize; })
+      ;
+
+    t.selectAll(".rowLabel")
+      .attr("y", function (d, i) { return i * cellSize; })
+      ;
+
+    t.selectAll(".colLabel")
+      .attr("y", function (d, i) { return i * cellSize; })
+      ;
+
+   }else if (value=="probe"){
+    var t = svg.transition().duration(3000);
+    t.selectAll(".cell")
+      .attr("y", function(d) { return (d.row - 1) * cellSize; })
+      ;
+
+    t.selectAll(".rowLabel")
+      .attr("y", function (d, i) { return i * cellSize; })
+      ;
+   }else if (value=="contrast"){
+    var t = svg.transition().duration(3000);
+    t.selectAll(".cell")
+      .attr("x", function(d) { return (d.col - 1) * cellSize; })
+      ;
+    t.selectAll(".colLabel")
+      .attr("y", function (d, i) { return i * cellSize; })
+      ;
+   }
+  }
+  // 
+  var sa=d3.select(".g3")
+      .on("mousedown", function() {
+          if( !d3.event.altKey) {
+             d3.selectAll(".cell-selected").classed("cell-selected",false);
+             d3.selectAll(".rowLabel").classed("text-selected",false);
+             d3.selectAll(".colLabel").classed("text-selected",false);
+          }
+         var p = d3.mouse(this);
+         sa.append("rect")
+         .attr({
+             rx      : 0,
+             ry      : 0,
+             class   : "selection",
+             x       : p[0],
+             y       : p[1],
+             width   : 1,
+             height  : 1
+         })
+      })
+      .on("mousemove", function() {
+         var s = sa.select("rect.selection");
+      
+         if(!s.empty()) {
+             var p = d3.mouse(this),
+                 d = {
+                     x       : parseInt(s.attr("x"), 10),
+                     y       : parseInt(s.attr("y"), 10),
+                     width   : parseInt(s.attr("width"), 10),
+                     height  : parseInt(s.attr("height"), 10)
+                 },
+                 move = {
+                     x : p[0] - d.x,
+                     y : p[1] - d.y
+                 }
+             ;
+      
+             if(move.x < 1 || (move.x*2<d.width)) {
+                 d.x = p[0];
+                 d.width -= move.x;
+             } else {
+                 d.width = move.x;       
+             }
+      
+             if(move.y < 1 || (move.y*2<d.height)) {
+                 d.y = p[1];
+                 d.height -= move.y;
+             } else {
+                 d.height = move.y;       
+             }
+             s.attr(d);
+      
+                 // deselect all temporary selected state objects
+             d3.selectAll('.cell-selection.cell-selected').classed("cell-selected", false);
+             d3.selectAll(".text-selection.text-selected").classed("text-selected",false);
+
+             d3.selectAll('.cell').filter(function(cell_d, i) {
+                 if(
+                     !d3.select(this).classed("cell-selected") && 
+                         // inner circle inside selection frame
+                     (this.x.baseVal.value)+cellSize >= d.x && (this.x.baseVal.value)<=d.x+d.width && 
+                     (this.y.baseVal.value)+cellSize >= d.y && (this.y.baseVal.value)<=d.y+d.height
+                 ) {
+      
+                     d3.select(this)
+                     .classed("cell-selection", true)
+                     .classed("cell-selected", true);
+
+                     d3.select(".r"+(cell_d.row-1))
+                     .classed("text-selection",true)
+                     .classed("text-selected",true);
+
+                     d3.select(".c"+(cell_d.col-1))
+                     .classed("text-selection",true)
+                     .classed("text-selected",true);
+                 }
+             });
+         }
+      })
+      .on("mouseup", function() {
+            // remove selection frame
+         sa.selectAll("rect.selection").remove();
+      
+             // remove temporary selection marker class
+         d3.selectAll('.cell-selection').classed("cell-selection", false);
+         d3.selectAll(".text-selection").classed("text-selection",false);
+      })
+      .on("mouseout", function() {
+         if(d3.event.relatedTarget.tagName=='html') {
+                 // remove selection frame
+             sa.selectAll("rect.selection").remove();
+                 // remove temporary selection marker class
+             d3.selectAll('.cell-selection').classed("cell-selection", false);
+             d3.selectAll(".rowLabel").classed("text-selected",false);
+             d3.selectAll(".colLabel").classed("text-selected",false);
+         }
+      });
+
+});
+d(null, state_transitions);
+</script>

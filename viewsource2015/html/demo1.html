@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<!-- saved from url=(0068)https://yahoo.github.io/secure-handlebars/demosSecureHandlebars.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <title>Secure Handlebars Demo</title>
+    <link rel="stylesheet" type="text/css" href="./demo_files/cssbase-min.css">
+    <link rel="stylesheet" type="text/css" href="./demo_files/cssreset-min.css">
+    <link rel="stylesheet" href="./demo_files/security.css" type="text/css">
+
+    <!-- Bootstrap -->
+    <link href="./demo_files/bootstrap.min.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+
+    <link href="./demo_files/blog.css" rel="stylesheet">
+    <link href="./demo_files/carousel.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9] >
+      <script src="javascripts/html5shiv.min.js"></script>
+      <script src="javascripts/respond.min.js"></script>
+    <![endif]-->
+  <style>
+    .templateBox {
+        resize: none;
+    }
+    </style><style id="holderjs-style" type="text/css"></style></head>
+    
+
+    <body>
+
+&nbsp;
+
+    <div class="container">
+      <!-- grid system: http://getbootstrap.com/css/#grid -->
+      <div class="row">
+
+        <div class="col-md-6 blog-post">
+          <h3>Original Handlebars Template</h3>
+          <code style="padding: 0 0 0 0;"><textarea id="templateInput" class="templateBox form-control" rows="8">
+<li id={{id}} onclick="show()">
+  TODO: <a href="{{url}}">
+    {{title}}
+  </a>
+</li>
+          </textarea></code>
+        </div>
+
+        <div class="col-md-6 blog-post">
+          <h3>Data input in JSON format</h3>
+          <code style="padding: 0 0 0 0;"><textarea id="jsonInput" class="templateBox form-control" aria-describedby="basic-addon1" rows="8">
+{
+  "title": "prepare dinner",
+  "id": "123",
+  "url": "http://foo.bar",
+  "foo": "ok"
+}
+          </textarea></code>
+        </div>
+        <div style="display:none" class="col-md-6 blog-post">
+          <h3>Preprocessed Handlebars Template</h3>
+          <code style="padding: 0 0 0 0;"><textarea id="templateOutput" class="templateBox form-control" aria-describedby="basic-addon1" rows="8" readonly=""></code></textarea>
+        </div>        
+        <div class="col-md-6 blog-post">
+          <h3>Result (HB)</h3>
+          <div id="orightmloutput">&nbsp;</div>
+          <code style="padding: 0 0 0 0;"><textarea id="origoutput" class="templateBox form-control" aria-describedby="basic-addon1" rows="8" readonly=""></textarea></code>
+        </div><!-- blog-post -->
+        <div class="col-md-6 blog-post">
+          <h3>Result (Safe HB)</h3>
+          <div id="htmloutput">&nbsp;</div>
+          <code style="padding: 0 0 0 0;"><textarea id="output" class="templateBox form-control" aria-describedby="basic-addon1" rows="8" readonly=""></textarea></code>
+        </div><!-- blog-post -->
+        <div class="col-md-12 blog-post" style="display: none;">
+          <p><input type="checkbox" id="strictMode" aria-label="Strict Mode" checked> Enable strict mode </p>
+        </div>
+
+        <script src="./demo_files/handlebars.runtime.js"></script>
+        <script src="./demo_files/secure-handlebars.min.js"></script>
+        <script src="./demo_files/demos_context_parser_handlebars.js"></script>
+
+     
+
+
+
+      </div><!-- row -->
+    </div><!-- container -->
+
+        <!-- Bootstrap core JavaScript
+        ================================================== -->
+        <!-- Placed at the end of the document so the pages load faster -->
+        <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+        <script src="./demo_files/jquery.min.js"></script>
+        <!-- Include all compiled plugins (below), or include individual files as needed -->
+        <script src="./demo_files/bootstrap.min.js"></script>
+    
+        <script src="./demo_files/docs.min.js"></script>
+        <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+        <script src="./demo_files/ie10-viewport-bug-workaround.js"></script>
+    
+      
+    
+</body></html>

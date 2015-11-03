@@ -1,0 +1,22 @@
+         
+ <script src="./demo_files/handlebars.runtime.js"></script>
+
+<script id="entry-template" type="text/x-handlebars-template">
+  <div class="entry">
+    <h1>{{title}}</h1>
+    <div class="body">
+      {{body}}
+    </div>
+  </div>
+</script>
+
+<script>
+
+var source   = document.getElementById("entry-template").innerText;
+var template = origHandlebars.compile(source);
+
+var context = {title: "My New Post", body: "This is my first post!"};
+var html    = template(context);
+
+alert(html)
+</script>
