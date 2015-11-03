@@ -1,5 +1,5 @@
-Web Secuity Made Easy
-3 Nov 2015
+Web Security Made Easy
+View Source, Portland, 3 Nov 2015
 
 Albert Yu
 Yahoo Paranoid 
@@ -18,13 +18,13 @@ How many of you are interested in web security?
 
 How many of you are interested in web security? 
 
-How many of you has resolve a security issue recently?
+How many of you has resolved a security issue recently?
 
 * Survey
 
 How many of you are interested in web security? 
 
-How many of you has resolve a security issue recently?
+How many of you has resolved a security issue recently?
 
 How many of you like working with the security team?
 
@@ -52,7 +52,9 @@ How many of you like working with the security team?
 
 * What I actually do
 
-.image img/pull-hair.jpg 500 _
+.image img/pull-hair.jpg 400 _
+
+- imagine what happens when you keep doing this for 10 years.
 
 
 
@@ -81,7 +83,7 @@ What development team sees:
 - Reactive
 - Process?
 
-A single bug would compromise security of the whole system.
+A single bug would have compromised the security of the whole system.
 
 It's a no-win situation.
 
@@ -167,13 +169,15 @@ OS, by design, tries to prevent mistakes that write *data* to *code* block.
 
 .code code/sqlbind.js
 
-How this work?
+So how this works?
 
 - SQL engine parses the query,
-- identify data and code segments,
-- and then make sure data segment never overwrites the boundary.
+- identifies data and code segments,
+- and then makes sure the data piece never overwrites the boundary.
 
 * "but most of all, samy is my hero" (2005)
+
+10 year anniversary!
 
 Probably casued by:
 
@@ -185,7 +189,7 @@ But not:
 
 Good enough?
 
-* XSS in action: Component JS
+* XSS in action: todomvc / component JS
 
 # TODO: show the html template
 # 
@@ -213,6 +217,7 @@ Good enough?
 - Should JQuery Markup turn on nunjuck autoescape by default?
 - Should Template author sanitize the data before putting it to template engine?
 
+Also, remember there is no native templating logic inside a browser. All of these are done via emulation.
 
 * A hard escape game
 
@@ -293,6 +298,7 @@ It renders as:
 Section 8, Tokenization: 
 
 - 149 pages (using print preview)
+- yes, we actually read it through.
 
 There is an easier way to read it or build it...
 
@@ -349,7 +355,7 @@ Facebook's React JSX
 .image img/dangeroushtml.png _ 800 
 
 
-* Part 2: Browser Security
+* Part 2: Browser Security: TLS, CSP, CORS, PKP, ...
 
 * If you are still awake
 
@@ -365,7 +371,7 @@ Let's do that next time!
 
 * Developer: please use the right library in the right way
 
-Legitimate templating: put *escaped* data in HTML data blocks only 
+Logic-less templating: put *escaped* data in HTML data blocks only 
 
     <div>{{inHTMLData data}}</div>
 
@@ -523,6 +529,8 @@ Primary Contributors for JS Templating and Utilities
 .link https://github.com/yukinying/talks/tree/master/viewsource2015 
 
 - presented via go present tools
+
+Let's build a safer web!
 
 # References 
 # https://css.csail.mit.edu/6.858/2011/slides/LEC6.pdf 
